@@ -1,0 +1,4 @@
+Complete haml_ref's in text/references to provide a good standard to work towards.
+Give serious thought to whether or not to support Ruby hash syntax.
+Should it always generate HTML/PHP, or should it incorporate it's own templating system and output plain HTML.
+	Consider performance especially. (Need some form of caching fo sho).
