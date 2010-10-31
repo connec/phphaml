@@ -33,7 +33,7 @@ $tests = array_unique(array_map(
 	)
 ));
 
-asort($tests);
+natsort($tests);
 
 foreach($tests as $i => $test) {
 	
@@ -45,7 +45,7 @@ foreach($tests as $i => $test) {
 		$error = '<pre class="error">'.$e.'</pre>';
 	}
 	
-	$input = str_replace("\r", '', file_get_contents("references/$test.haml"));
+	$input = htmlentities(str_replace("\r", '', file_get_contents("references/$test.haml")));
 	$output = trim($parser->result());
 	$expected = trim(str_replace("\r", '', file_get_contents("references/$test.html")));
 	

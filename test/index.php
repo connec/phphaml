@@ -22,12 +22,8 @@
 				font-size: 0.9em;
 			}
 			
-			div.success {
+			div.success, div.failure {
 				display: none;
-			}
-			
-			div.failure {
-				display: block;
 			}
 			
 			.left, .right {
