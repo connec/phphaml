@@ -29,7 +29,6 @@ class RubyArray extends RubyList {
 	
 	public function __construct($str) {
 		
-		var_dump($str);
 		parent::__construct($str);
 		
 	}
