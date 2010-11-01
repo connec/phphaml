@@ -42,7 +42,7 @@ class Exception extends \Exception {
 			$message = static::$messages[$message];
 		
 		$this->original_message = $message;
-		$this->variables = $var;
+		$this->variables = $vars;
 		
 		$this->substitute();
 		
