@@ -6,7 +6,9 @@
 
 namespace hamlparser\lib\haml;
 
-use \hamlparser\lib\Exception;
+use
+	\hamlparser\lib\Exception,
+	\hamlparser\lib\RubyHash;
 
 /**
  * The TagNode class represents a tag node in the parse tree.
@@ -32,6 +34,7 @@ class TagNode extends HamlNode {
 			);
 		}
 		
+		$this->parse_attribute_hash();
 		$this->parse_self_closing();
 		$this->parse_content();
 		
@@ -124,6 +127,40 @@ class TagNode extends HamlNode {
 			throw new Exception(
 				'Syntax error: unexpected ":char", expected EOL - line :line',
 				array('char' => $this->content[1], 'line' => $this->line)
+			);
+		}
+		
+	}
+	
+	/**
+	 * Parses the attributes hash from the content.
+	 */
+	protected function parse_attribute_hash() {
+		
+		if($this->content[0] != '{')
+			return;
+		
+		$re = '/^{.*}/';
+		if(!preg_match($re, $this->content, $match)) {
+			throw new Exception(
+				'Syntax error: bad attribute hash format - line :line',
+				array('line' => $this->line)
+			);
+		}
+		
+		$this->content = substr($this->content, strlen($match[0]));
+		
+		try {
+			$hash = new RubyHash($match[0]);
+			$this->metadata['attributes'] = array_merge_recursive(
+				$this->metadata['attributes'],
+				$hash->to_a()
+			);
+			ksort($this->metadata['attributes']);
+		} catch(Exception $e) {
+			throw new Exception(
+				$e->getMessage() . ' - line :line',
+				array('line' => $this->line)
 			);
 		}
 		
