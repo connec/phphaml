@@ -28,7 +28,7 @@
 			
 			.left, .right {
 				float: left;
-				width: 500px;
+				width: 40%;
 				margin: 0 1em;
 				padding: 1em;
 				background-color: #eee;

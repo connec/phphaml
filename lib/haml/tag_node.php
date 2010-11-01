@@ -19,57 +19,129 @@ class TagNode extends HamlNode {
 	 */
 	protected function parse() {
 		
-		$this->metadata['tag'] = 'div';
 		$this->metadata['attributes'] = array();
-		$this->metadata['self_closing'] = false;
 		
-		if($this->content[0] == '%') {
-			$this->content = substr($this->content, 1);
-			
-			if(!preg_match('/^([a-zA-z]+)/', $this->content, $match)) {
-				throw new Exception(
-					'Invalid syntax: "%" must be followed by a valid tag name - line :line',
-					array('line' => $this->line)
-				);
-			}
-			
-			$this->content = substr($this->content, strlen($match[0]));
-			$this->metadata['tag'] = $match[0];
-		}
+		$this->parse_tag_name();
+		$this->parse_classes();
+		$this->parse_id();
 		
-		$re_id = '/^#([a-zA-Z0-9_]+)/';
-		$re_class = '/^\.([a-zA-Z0-9-]+)/';
-		while($this->content[0] == '.' or $this->content[0] == '#') {
-			$char = $this->content[0];
-			$type = $char == '#' ? 'id' : 'class';
-			$re   = ${'re_' . $type};
-			
-			if(!preg_match($re, $this->content, $match)) {
-				throw new Exception(
-					'Invalid syntax: ":char" must be followed by a valid :type name - line :line',
-					array('char' => $char, 'type' => $type, 'line' => $this->line)
-				);
-			}
-			
-			$this->content = substr($this->content, strlen($match[0]));
-			if(!isset($this->metadata['attributes'][$type]))
-				$this->metadata['attributes'][$type] = array();
-			$this->metadata['attributes'][$type][] = substr($match[0], 1);
-		}
-		
-		if($this->content[0] == ' ') {
-			$this->content = substr($this->content, 1);
-		} elseif($this->content[0] == '/') {
-			$this->content = substr($this->content, 1);
-			$this->metadata['self_closing'] = true;
-		} elseif($this->content) {
+		if(!isset($this->metadata['tag'])) {
 			throw new Exception(
-				'Invalid syntax: unexpected ":char" in tag definition, expected " " (space), "/" or EOL - line :line',
-				array('char' => $this->content[0], 'line' => $this->line)
+					'Sanity error: created TagNode but no tag definition (%, . or #) found - line :line',
+					array('line' => $this->line)
 			);
 		}
 		
-		ksort($this->metadata['attributes']);
+		$this->parse_self_closing();
+		$this->parse_content();
+		
+	}
+	
+	/**
+	 * Parses the tag definition from the content.
+	 */
+	protected function parse_tag_name() {
+		
+		if($this->content[0] != '%')
+			return;
+		
+		$re = '/%([a-zA-Z]+)/';
+		if(!preg_match($re, $this->content, $match)) {
+			throw new Exception(
+				'Syntax error: tags can contain only alpha characters - line :line',
+				array('line' => $this->line)
+			);
+		}
+		
+		$this->content = substr($this->content, strlen($match[0]));
+		$this->metadata['tag'] = $match[1];
+		
+	}
+	
+	/**
+	 * Parses any classes from the content.
+	 */
+	protected function parse_classes() {
+		
+		if($this->content[0] != '.')
+			return;
+		
+		$re = '/\.[a-zA-Z0-9-]+/';
+		if(!preg_match_all($re, $this->content, $match)) {
+			throw new Exception(
+				'Syntax error: invalid class attribute - line :line',
+				array('line' => $this->line)
+			);
+		}
+		
+		if(!isset($this->metadata['tag']))
+			$this->metadata['tag'] = 'div';
+		
+		$this->metadata['attributes']['class'] = array();
+		foreach($match[0] as $class) {
+			$this->content = substr($this->content, strlen($class));
+			$this->metadata['attributes']['class'][] = substr($class, 1);
+		}
+		
+	}
+	
+	/**
+	 * Parses the ID from the content.
+	 */
+	protected function parse_id() {
+		
+		if($this->content[0] != '#')
+			return;
+		
+		$re = '/(#[a-zA-Z0-9_]+)/';
+		if(!preg_match($re, $this->content, $match)) {
+			throw new Exception(
+				'Syntax error: invalid ID - line :line',
+				array('line' => $this->line)
+			);
+		}
+		
+		$this->content = substr($this->content, strlen($match[0]));
+		
+		if(!isset($this->metadata['tag']))
+			$this->metadata['tag'] = 'div';
+		
+		$this->metadata['attributes']['id'] = array(substr($match[1], 1));
+		
+	}
+	
+	/**
+	 * Parses the self closing indicator from the content.
+	 */
+	protected function parse_self_closing() {
+		
+		if($this->content[0] != '/') {
+			$this->metadata['self_closing'] = false;
+		} elseif($this->content == '/') {
+			$this->metadata['self_closing'] = true;
+			$this->content = '';
+		} else {
+			throw new Exception(
+				'Syntax error: unexpected ":char", expected EOL - line :line',
+				array('char' => $this->content[1], 'line' => $this->line)
+			);
+		}
+		
+	}
+	
+	/**
+	 * Parses the remaining content.
+	 */
+	protected function parse_content() {
+		
+		if($this->content and $this->content[0] != ' ') {
+			throw new Exception(
+				'Syntax error: unexpected ":char", expected " " (space) - line :line',
+				array('char' => $this->content[0], 'line' => $this->line)
+			);
+		} elseif($this->content) {
+			$this->content = substr($this->content, 1);
+		}
 		
 	}
 	
