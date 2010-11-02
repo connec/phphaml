@@ -1,6 +1,6 @@
 <?php
 
-use \hamlparser\lib\haml\HamlParser;
+use \hamlparser\lib\haml\Parser;
 
 require '../lib.php';
 require 'diff.php';
@@ -37,16 +37,16 @@ natsort($tests);
 
 foreach($tests as $i => $test) {
 	
-	$parser = new HamlParser;
+	$parser = new Parser;
 	$error = '';
 	try {
-		$parser->parse("references/$test.haml");
+		$output = $parser->parse("references/$test.haml");
 	} catch(Exception $e) {
+		$output = '';
 		$error = '<pre class="error">'.$e.'</pre>';
 	}
 	
 	$input = htmlentities(str_replace("\r", '', file_get_contents("references/$test.haml")));
-	$output = trim($parser->result());
 	$expected = trim(str_replace("\r", '', file_get_contents("references/$test.html")));
 	
 	if($output == $expected)
