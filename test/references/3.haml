@@ -5,7 +5,7 @@
 			:src => "javascripts/script_#{2 + 7}"}
 	
 	%body
-		.class#id{:id => ['b', 'a'], :class => ['a', 'b']}
+		.class#id{:id => ['b', 'a'], :class => ['a', $b]}
 			%img{:src => '/a/b/c'}/
 			%p{'style'=>"abc"} Paragraph!
 		%i{:var => $value}/

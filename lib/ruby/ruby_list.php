@@ -6,6 +6,8 @@
 
 namespace hamlparser\lib\ruby;
 
+use \hamlparser\lib\Exception;
+
 /**
  * The RubyList class provides the base for RubyHash and RubyArray classes
  * to extend from.
@@ -161,7 +163,7 @@ abstract class RubyList {
 				$value = $value->to_a();
 			break;
 			case '$':
-				$re = '/^\$[a-zA-Z_][a-zA-Z0-9_]+$/';
+				$re = '/^\$[a-zA-Z_][a-zA-Z0-9_]*$/';
 				if(!preg_match($re, $value)) {
 					throw new Exception(
 						'Syntax error: invalid syntax for variable'
