@@ -217,7 +217,8 @@ abstract class Parser {
 		$this->root = new $node($this);
 		$this->node = $this->root;
 		
-		while($this->line = rtrim(fgets($fh), "\r\n")) {
+		while($this->line = fgets($fh)) {
+			$this->line = rtrim($this->line, "\r\n");
 			$this->line_number ++;
 			$this->handle_context();
 			if(!empty($this->line)) {
