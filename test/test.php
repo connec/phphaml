@@ -8,10 +8,10 @@ require 'diff.php';
 \hamlparser\Lib::autoload();
 
 $tpl_container = <<< 'END'
-<h4 class="test_heading %1$s" onclick="toggle(test_%2$d);">%3$s (%4$s)</h4>
+<h4 class="test_heading %1$s" onclick="toggle(test_%2$d);">%3$s (%4$s) %5$s</h4>
 <div class="container %1$s" id="test_%2$d">
-%5$s
 %6$s
+%7$s
 </div>
 END;
 
@@ -40,12 +40,16 @@ foreach($tests as $i => $test) {
 	$parser = new Parser;
 	$error = '';
 	try {
+		$time = microtime(true);
 		$output = $parser->parse("references/$test.haml");
+		$time = microtime(true) - $time;
 	} catch(Exception $e) {
+		$time = 0;
 		$output = '';
 		$error = '<pre class="error">'.$e.'</pre>';
 	}
 	
+	$time = number_format($time, 3);
 	$input = htmlentities(str_replace("\r", '', file_get_contents("references/$test.haml")));
 	$expected = trim(str_replace("\r", '', file_get_contents("references/$test.html")));
 	
@@ -55,7 +59,7 @@ foreach($tests as $i => $test) {
 		$success = false;
 	
 	$test_result = sprintf($tpl_test, $input, diff($expected, $output));
-	printf($tpl_container, $success ? 'success' : 'failure', $i, $test, $success ? 'Success' : 'Failure', $error, $test_result);
+	printf($tpl_container, $success ? 'success' : 'failure', $i, $test, $success ? 'Success' : 'Failure', $time, $error, $test_result);
 	
 }
 
