@@ -41,12 +41,6 @@ class TagNode extends Node {
 	 */
 	public function parse() {
 		
-		// Check if this node has a multiline hash.
-		while(substr($this->line, -1) == ',') {
-			$this->line .= ' ' . $this->children[0]->line();
-			array_shift($this->children);
-		}
-		
 		if($this->line[0] == '%')
 			$this->handle_tag();
 		if($this->line[0] == '.')
@@ -145,6 +139,12 @@ class TagNode extends Node {
 	 * Handles an "{...}" attribute hash.
 	 */
 	protected function handle_hash() {
+		
+		// Check if this node has a multiline hash.
+		while(substr($this->line, -1) == ',') {
+			$this->line .= ' ' . $this->children[0]->line();
+			array_shift($this->children);
+		}
 		
 		if(!preg_match('/^{.*}/', $this->line, $match)) {
 			throw new Exception(
