@@ -167,7 +167,7 @@ abstract class RubyList {
 						'Syntax error: invalid syntax for variable'
 					);
 				}
-				$value = '<?= ' . $value . ' ?>';
+				$value = '<?php echo ' . $value . '; ?>';
 			break;
 			default:
 				$value = RubyValue::value_to_string($value);

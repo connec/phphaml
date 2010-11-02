@@ -46,7 +46,7 @@ class RubyValue {
 			);
 		}
 		if($string[0] == '"') {
-			$string = preg_replace('/([^\\\\])#{(.*?)}/', '$1<?= $2 ?>', $string);
+			$string = preg_replace('/([^\\\\])#{(.*?)}/', '$1<?php echo $2; ?>', $string);
 			if(strpos($string, '#{') !== false) {
 				throw new Exception(
 					'Syntax error: no closing "}" for open "#{"'
