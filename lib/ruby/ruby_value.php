@@ -45,7 +45,14 @@ class RubyValue {
 				array('char1' => $string[strlen($string) - 1], 'char2' => $string[0])
 			);
 		}
-		
+		if($string[0] == '"') {
+			$string = preg_replace('/([^\\\\])#{(.*?)}/', '$1<?= $2 ?>', $string);
+			if(strpos($string, '#{') !== false) {
+				throw new Exception(
+					'Syntax error: no closing "}" for open "#{"'
+				);
+			}
+		}
 		return substr($string, 1, -1);
 		
 	}
