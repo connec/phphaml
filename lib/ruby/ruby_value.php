@@ -4,7 +4,7 @@
  * string.php
  */
 
-namespace hamlparser\lib;
+namespace hamlparser\lib\ruby;
 
 /**
  * The RubyValue class contains functions for checking if a given string is a 

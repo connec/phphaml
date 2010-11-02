@@ -4,7 +4,7 @@
  * ruby_hash.php
  */
 
-namespace hamlparser\lib;
+namespace hamlparser\lib\ruby;
 
 /**
  * The RubyHash class parses a ruby hash (as a string).

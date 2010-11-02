@@ -4,7 +4,7 @@
  * ruby_list.php
  */
 
-namespace hamlparser\lib;
+namespace hamlparser\lib\ruby;
 
 /**
  * The RubyList class provides the base for RubyHash and RubyArray classes
