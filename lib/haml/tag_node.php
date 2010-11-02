@@ -8,217 +8,227 @@ namespace hamlparser\lib\haml;
 
 use
 	\hamlparser\lib\Exception,
-	\hamlparser\lib\RubyHash;
+	\hamlparser\lib\ruby\RubyHash;
 
 /**
- * The TagNode class represents a tag node in the parse tree.
+ * The TagNode class handles tree representation and parsing of HAML tag nodes.
  */
 
-class TagNode extends HamlNode {
+class TagNode extends Node {
 	
 	/**
-	 * Parses the content of the node.
+	 * The name of the tag.
 	 */
-	protected function parse() {
+	protected $tag;
+	
+	/**
+	 * Any inline content for the tag.
+	 */
+	protected $content;
+	
+	/**
+	 * The attributes of the tag.
+	 */
+	protected $attributes = array();
+	
+	/**
+	 * Indicates whether or not the tag is self-closing.
+	 */
+	protected $self_closing = false;
+	
+	/**
+	 * Parses the tree from this node.
+	 */
+	public function parse() {
 		
-		$this->metadata['attributes'] = array();
+		// Check if this node has a multiline hash.
+		while(substr($this->line, -1) == ',') {
+			$this->line .= ' ' . $this->children[0]->line();
+			array_shift($this->children);
+		}
 		
-		$this->parse_tag_name();
-		$this->parse_classes();
-		$this->parse_id();
+		if($this->line[0] == '%')
+			$this->handle_tag();
+		if($this->line[0] == '.')
+			$this->handle_class();
+		if($this->line[0] == '#')
+			$this->handle_id();
 		
-		if(!isset($this->metadata['tag'])) {
+		if(!$this->tag) {
 			throw new Exception(
-					'Sanity error: created TagNode but no tag definition (%, . or #) found - line :line',
-					array('line' => $this->line)
+				'Sanity error: generated TagNode for invalid line :line',
+				array('line' => $this->line_number)
 			);
 		}
 		
-		$this->parse_attribute_hash();
-		$this->parse_self_closing();
-		$this->parse_content();
+		if($this->line[0] == '{')
+			$this->handle_hash();
+		if($this->line[0] == '/')
+			$this->handle_self_closing();
+		if(!empty($this->line))
+			$this->handle_content();
+		
+		ksort($this->attributes);
+		if(isset($this->attributes['class'])) {
+			sort($this->attributes['class']);
+			$this->attributes['class'] = implode(' ', $this->attributes['class']);
+		}
+		if(isset($this->attributes['id']))
+			$this->attributes['id'] = implode('_', $this->attributes['id']);
+		foreach($this->attributes as $attribute => $value)
+			$this->attributes[$attribute] = $attribute . '="' . $value . '"';
+		
+		parent::parse();
 		
 	}
 	
 	/**
-	 * Parses the tag definition from the content.
+	 * Handles the "%" tag definition.
 	 */
-	protected function parse_tag_name() {
+	protected function handle_tag() {
 		
-		if($this->content[0] != '%')
-			return;
-		
-		$re = '/%([a-zA-Z]+)/';
-		if(!preg_match($re, $this->content, $match)) {
+		if(!preg_match('/^%[a-zA-Z0-9_:-]+/', $this->line, $match)) {
 			throw new Exception(
-				'Syntax error: tags can contain only alpha characters - line :line',
-				array('line' => $this->line)
+				'Syntax error: invalid tag name - line :line',
+				array('line' => $this->line_number)
 			);
 		}
 		
-		$this->content = substr($this->content, strlen($match[0]));
-		$this->metadata['tag'] = $match[1];
+		$this->line = substr($this->line, strlen($match[0]));
+		$this->tag = substr($match[0], 1);
 		
 	}
 	
 	/**
-	 * Parses any classes from the content.
+	 * Handles any "." class attributes.
 	 */
-	protected function parse_classes() {
+	protected function handle_class() {
 		
-		if($this->content[0] != '.')
-			return;
+		if(!$this->tag)
+			$this->tag = 'div';
+		$this->attributes['class'] = array();
 		
-		$re = '/\.[a-zA-Z0-9-]+/';
-		if(!preg_match_all($re, $this->content, $match)) {
-			throw new Exception(
-				'Syntax error: invalid class attribute - line :line',
-				array('line' => $this->line)
-			);
-		}
-		
-		if(!isset($this->metadata['tag']))
-			$this->metadata['tag'] = 'div';
-		
-		$this->metadata['attributes']['class'] = array();
-		foreach($match[0] as $class) {
-			$this->content = substr($this->content, strlen($class));
-			$this->metadata['attributes']['class'][] = substr($class, 1);
+		while($this->line[0] == '.') {
+			if(!preg_match('/^\.[_a-zA-Z-][_a-zA-Z0-9-]*/', $this->line, $match)) {
+				throw new Exception(
+					'Syntax error: invalid class name - line :line',
+					array('line' => $this->line_number)
+				);
+			}
+			
+			$this->line = substr($this->line, strlen($match[0]));
+			$this->attributes['class'][] = substr($match[0], 1);
 		}
 		
 	}
 	
 	/**
-	 * Parses the ID from the content.
+	 * Handles the "#" id definition.
 	 */
-	protected function parse_id() {
+	protected function handle_id() {
 		
-		if($this->content[0] != '#')
-			return;
+		$this->attributes['id'] = array();
 		
-		$re = '/(#[a-zA-Z0-9_]+)/';
-		if(!preg_match($re, $this->content, $match)) {
+		if(!preg_match('/^#[a-zA-Z][_a-zA-Z0-9:.-]*/', $this->line, $match)) {
 			throw new Exception(
 				'Syntax error: invalid ID - line :line',
-				array('line' => $this->line)
+				array('line' => $this->line_number)
 			);
 		}
 		
-		$this->content = substr($this->content, strlen($match[0]));
-		
-		if(!isset($this->metadata['tag']))
-			$this->metadata['tag'] = 'div';
-		
-		$this->metadata['attributes']['id'] = array(substr($match[1], 1));
+		$this->line = substr($this->line, strlen($match[0]));
+		$this->attributes['id'][] = substr($match[0], 1);
 		
 	}
 	
 	/**
-	 * Parses the self closing indicator from the content.
+	 * Handles an "{...}" attribute hash.
 	 */
-	protected function parse_self_closing() {
+	protected function handle_hash() {
 		
-		if($this->content[0] != '/') {
-			$this->metadata['self_closing'] = false;
-		} elseif($this->content == '/') {
-			$this->metadata['self_closing'] = true;
-			$this->content = '';
-		} else {
+		if(!preg_match('/^{.*}/', $this->line, $match)) {
 			throw new Exception(
-				'Syntax error: unexpected ":char", expected EOL - line :line',
-				array('char' => $this->content[1], 'line' => $this->line)
+				'Syntax error: missing closing "}" for hash - line :line',
+				array('line' => $this->line_number)
 			);
 		}
 		
-	}
-	
-	/**
-	 * Parses the attributes hash from the content.
-	 */
-	protected function parse_attribute_hash() {
-		
-		if($this->content[0] != '{')
-			return;
-		
-		$re = '/^{.*}/';
-		if(!preg_match($re, $this->content, $match)) {
-			throw new Exception(
-				'Syntax error: bad attribute hash format - line :line',
-				array('line' => $this->line)
-			);
-		}
-		
-		$this->content = substr($this->content, strlen($match[0]));
+		$this->line = substr($this->line, strlen($match[0]));
 		
 		try {
 			$hash = new RubyHash($match[0]);
-			$this->metadata['attributes'] = array_merge_recursive(
-				$this->metadata['attributes'],
-				$hash->to_a()
-			);
-			ksort($this->metadata['attributes']);
+			$hash = $hash->to_a();
 		} catch(Exception $e) {
 			throw new Exception(
 				$e->getMessage() . ' - line :line',
-				array('line' => $this->line)
+				array('line' => $this->line_number)
 			);
 		}
+		
+		$this->attributes = array_merge($hash, $this->attributes);
+		if(isset($hash['class']) and isset($this->attributes['class']))
+			$this->attributes['class'] = array_merge($this->attributes['class'], $hash['class']);
+		if(isset($hash['id']) and isset($this->attributes['id']))
+			$this->attributes['id'] = array_merge($this->attributes['id'], $hash['id']);
 		
 	}
 	
 	/**
-	 * Parses the remaining content.
+	 * Handles self closing tags.
 	 */
-	protected function parse_content() {
+	protected function handle_self_closing() {
 		
-		if($this->content and $this->content[0] != ' ') {
+		if($this->line != '/' or !empty($this->children)) {
 			throw new Exception(
-				'Syntax error: unexpected ":char", expected " " (space) - line :line',
-				array('char' => $this->content[0], 'line' => $this->line)
+				'Parse error: self-closing tags cannot have content - line :line',
+				array('line' => $this->line_number)
 			);
-		} elseif($this->content) {
-			$this->content = substr($this->content, 1);
 		}
+		
+		$this->self_closing = true;
 		
 	}
 	
 	/**
-	 * Generates the string representation of the node.
+	 * Handles inline content.
+	 */
+	protected function handle_content() {
+		
+		if(!empty($this->children)) {
+			throw new Exception(
+				'Parse error: cannot mix inline and indented content - line :line',
+				array('line' => $this->children[0]->line_number())
+			);
+		}
+		$this->content = trim($this->line);
+		$this->line = '';
+		
+	}
+	
+	/**
+	 * Generates the result of the tree from this node.
 	 */
 	public function __toString() {
 		
-		$indent = str_repeat("\t", $this->indent_level);
+		$indent = str_repeat($this->parser->indent(), $this->indent_level);
 		
-		$attributes = $this->metadata['attributes'];
-				
-		if(isset($attributes['id']))
-			$attributes['id'] = implode('_', $attributes['id']);
-		if(isset($attributes['class']))
-			$attributes['class'] = implode(' ', $attributes['class']);
+		$return = $indent . '<' . $this->tag;
 		
-		if(!empty($attributes)) {
-			$attribute_str = '';
-			foreach($attributes as $attribute => $value)
-				$attribute_str .= $attribute . '="' . $value . '" ';
-			$attribute_str = trim($attribute_str);
-		}
+		if(!empty($this->attributes))
+			$return .= ' ' . implode(' ', $this->attributes);
 		
-		$return = $indent . '<' . $this->metadata['tag'];
-		if(!empty($attributes))
-			$return .= ' ' . $attribute_str;
-		if($this->metadata['self_closing'])
-			return $return . ' />' . "\n";
+		if($this->self_closing)
+			return $return . " />\n";
+		
 		$return .= '>';
 		
 		if($this->content or empty($this->children))
-			return $return . $this->content . '</' . $this->metadata['tag'] . '>' . "\n";
+			return $return . $this->content . "</$this->tag>\n";
 		
 		$return .= "\n";
 		foreach($this->children as $child)
 			$return .= (string)$child;
-		$return .= $indent . '</' . $this->metadata['tag'] . '>' . "\n";
-		
-		return $return;
+		return $return . "$indent</$this->tag>\n";
 		
 	}
 	

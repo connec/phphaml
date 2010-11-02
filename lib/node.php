@@ -7,28 +7,33 @@
 namespace hamlparser\lib;
 
 /**
- * The Node class represents a node of parsed document data.
+ * The Node class represents a node in the parse tree.
  */
 
-class Node {
+abstract class Node {
 	
 	/**
-	 * The line this node is on.
+	 * The parser that created this node.
+	 */
+	protected $parser;
+	
+	/**
+	 * The line number that generated this node.
+	 */
+	protected $line_number;
+	
+	/**
+	 * The line that generated this node.
 	 */
 	protected $line;
 	
 	/**
-	 * The indent level this node is at.
+	 * The indent level of this node.
 	 */
 	protected $indent_level;
 	
 	/**
-	 * The content of this node.
-	 */
-	protected $content;
-	
-	/**
-	 * A reference to this node's parent.
+	 * The parent of this node.
 	 */
 	protected $parent;
 	
@@ -38,48 +43,25 @@ class Node {
 	protected $children = array();
 	
 	/**
-	 * The metadata for this node.
+	 * Returns the line number that generated this node.
 	 */
-	protected $metadata = array();
-	
-	/**
-	 * Returns a node type depending on given content.
-	 */
-	public static function factory($line, $indent_level, $content = '', $parent = null, $children = array()) {
+	public function line_number() {
 		
-		return new Node($line, $indent_level, $content, $parent, $children);
+		return $this->line_number;
 		
 	}
 	
 	/**
-	 * Initialises the node.
+	 * Returns the line that generated this node.
 	 */
-	public function __construct($line, $indent_level, $content = '', $parent = null, $children = array()) {
+	public function line() {
 		
-		$this->line         = $line;
-		$this->indent_level = $indent_level;
-		$this->content      = $content;
-		$this->parent       = $parent;
-		$this->children     = $children;
+		return $this->line;
 		
 	}
 	
 	/**
-	 * Parses the content into appropriate content/metadata.
-	 */
-	protected function parse() {}
-	
-	/**
-	 * Adds a child to the node.
-	 */
-	public function add_child($child) {
-		
-		$this->children[] = $child;
-		
-	}
-	
-	/**
-	 * Gets the parent of the node.
+	 * Returns the parent of this node.
 	 */
 	public function parent() {
 		
@@ -88,7 +70,7 @@ class Node {
 	}
 	
 	/**
-	 * Gets the last child in the child list.
+	 * Returns the last child of this node.
 	 */
 	public function last_child() {
 		
@@ -97,30 +79,38 @@ class Node {
 	}
 	
 	/**
-	 * Checks the tree from this node (inclusive) is valid.
+	 * Creates a new node and appends it to this node's children.
 	 */
-	public function validate() {
+	public function add_child($parser) {
 		
-		return true;
+		$node = get_class($this);
+		$this->children[] = new $node($parser, $this);
 		
 	}
 	
 	/**
-	 * Generates the string output for this node and it's subtree.
+	 * Initialises a node with the given parser.
 	 */
-	public function __toString() {
+	public function __construct($parser, $parent = null) {
 		
-		if($this->content)
-			$return = str_repeat("\t", $this->indent_level) . $this->content . "\n";
-		else
-			$return = '';
+		$this->parser = $parser;
+		$this->parent = $parent;
 		
-		foreach($this->children as $child)
-			$return .= (string)$child;
-		
-		return $return;
+		$this->line_number = $parser->line_number();
+		$this->line = $parser->line();
+		$this->indent_level = $parser->indent_level();
 		
 	}
+	
+	/**
+	 * Parses the tree from this node.
+	 */
+	abstract public function parse();
+	
+	/**
+	 * Generates the string representation for the tree from this node.
+	 */
+	abstract public function __toString();
 	
 }
 
