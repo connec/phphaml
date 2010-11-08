@@ -1,297 +1,133 @@
 <?php
 
-/**
- * parser.php
- */
-
 namespace hamlparser\lib;
 
-/**
- * The Parser class handles the construction of the parse tree and general 
- * structure checking.
- */
-
-abstract class Parser {
+class Parser {
 	
-	/**
-	 * The class to use for tree nodes.
-	 */
+	const RE_INDENT = '/^\s+/';
+	const EXPECT_LESS = 1;
+	const EXPECT_SAME = 2;
+	const EXPECT_MORE = 4;
+	const EXPECT_ANY = 7;
+	
 	protected static $node_class = '\hamlparser\lib\Node';
+	protected static $current;
 	
-	/**
-	 * Bit-flag for indicating to the parser that the indent level should
-	 * decrease.
-	 */
-	const INDENT_LESS = 1;
-	
-	/**
-	 * Bit-flag for indicating to the parser that the indent level should
-	 * increase.
-	 */
-	const INDENT_MORE = 2;
-	
-	/**
-	 * Bit-flag for indicating to the parser that the indent level should
-	 * remain the same.
-	 */
-	const INDENT_SAME = 4;
-	
-	/**
-	 * Convenience bit-flag for indicating to the parser that the indent level
-	 * can do anything.
-	 */
-	const INDENT_ANY = 7;
-	
-	/**
-	 * The options configuring the parser.
-	 */
-	protected $options = array();
-	
-	/**
-	 * The root of the parse tree.
-	 */
-	protected $root;
-	
-	/**
-	 * The current context node.
-	 */
+	protected $expect_indent = self::EXPECT_SAME;
+	protected $indent_string = '';
+	protected $indent_level = 0;
+	protected $line_number = 0;
+	protected $line;
+	protected $tree;
 	protected $node;
 	
-	/**
-	 * The line number of the line being processed.
-	 */
-	protected $line_number = 0;
-	
-	/**
-	 * The line of the file being parsed.
-	 */
-	protected $line;
-	
-	/**
-	 * The indent string of the file being parsed.
-	 */
-	protected $indent;
-	
-	/**
-	 * The current indent level.
-	 */
-	protected $indent_level = 0;
-	
-	/**
-	 * The expected indent level as a bit-flag.
-	 */
-	protected $expected_indent = self::INDENT_SAME;
-	
-	/**
-	 * The result of the most recent parse.
-	 */
-	protected $result;
-	
-	/**
-	 * Returns the value of the given option, or the options array if none
-	 * given.
-	 */
-	public function options($option = null) {
+	public static function expect_indent($expect_indent) {
 		
-		if(!$options)
-			return $this->options;
-		
-		if(!isset($this->options[$option])) {
-			throw new Exception(
-				'Internal error: unknown option ":option"',
-				array('option' => $option)
-			);
-		}
-		
-		return $this->options[$option];
+		static::$current->expect_indent = $expect_indent;
 		
 	}
 	
-	/**
-	 * Returns the line number of the line being processed.
-	 */
-	public function line_number() {
+	public static function line() {
 		
-		return $this->line_number;
+		return static::$current->line;
 		
 	}
 	
-	/**
-	 * Returns the line of the file being parsed.
-	 */
-	public function line() {
+	public static function line_number() {
 		
-		return $this->line;
+		return static::$current->line_number;
 		
 	}
 	
-	/**
-	 * Returns the indent string of the file being parsed.
-	 */
-	public function indent() {
+	public static function indent_string() {
 		
-		return $this->indent;
+		return static::$current->indent_string;
 		
 	}
 	
-	/**
-	 * Returns the current indent level.
-	 */
-	public function indent_level() {
+	public static function indent_level() {
 		
-		return $this->indent_level;
+		return static::$current->indent_level;
 		
 	}
 	
-	/**
-	 * Sets the expected indent level bit-flag if given, returns the current
-	 * expectation otherwise.
-	 */
-	public function expect($flag = null) {
+	public static function node() {
 		
-		if($flag === null)
-			return $this->expected_indent;
-		
-		$this->expected_indent = $flag;
+		return static::$current->node;
 		
 	}
 	
-	/**
-	 * Returns the result of the most recent parse.
-	 */
-	public function result() {
-		
-		return $this->result;
-		
-	}
-	
-	/**
-	 * Initalises the parser with given options.
-	 */
-	public function __construct($options = array()) {
-		
-		if(!class_exists(static::$node_class)) {
-			throw new Exception(
-				'Internal error: given node class does not exist - :class',
-				array('class' => static::$node_class)
-			);
-		}
-		
-		if(!is_subclass_of(static::$node_class, '\hamlparser\lib\Node')) {
-			throw new Exception(
-				'Internal error: given node class does not extend \hamlparser\lib\Node - :class',
-				array('class' => static::$node_class)
-			);
-		}
-		
-		$this->options = $options;
-		
-	}
-	
-	/**
-	 * Parses the given file and returns the result.
-	 */
 	public function parse($file) {
 		
-		$sub = array('file' => $file);
-		if(!file_exists($file)) {
-			throw new Exception(
-				'Input error: file does not exist - :file',
-				$sub
-			);
-		}
-		if(!is_readable($file)) {
-			throw new Exception(
-				'Input error: could not read file - :file',
-				$sub
-			);
-		}
-		if(!($fh = fopen($file, 'r'))) {
-			throw new Exception(
-				'Input error: could not open file - :file',
-				$sub
-			);
-		}
+		static::$current = $this;
 		
-		$node = static::$node_class;
-		$this->root = new $node($this);
-		$this->node = $this->root;
+		$node_class = static::$node_class;
+		$this->tree = $this->node = new $node_class;
 		
-		while($this->line = fgets($fh)) {
-			$this->line = rtrim($this->line, "\r\n");
+		$file = $this->open_file($file);
+		while($this->line = rtrim(fgets($file), "\r\n")) {
 			$this->line_number ++;
-			$this->handle_context();
-			if(!empty($this->line)) {
-				$this->expected_indent = self::INDENT_ANY;
-				$this->node->add_child($this);
-			}
+			
+			$this->handle_indent();
+			$this->expect_indent = self::EXPECT_ANY;
+			
+			$this->node->add_child();
 		}
 		
-		$this->root->parse();
-		return rtrim((string)$this->root);
+		return rtrim((string)$this->tree);
 		
 	}
 	
-	/**
-	 * Handles context changes based on indentation.
-	 */
-	public function handle_context() {
+	protected function open_file($file) {
+		
+		$sub = array('file' => $file);
+		if(!file_exists($file))
+			throw new Exception('File error: file does not exist - :file', $sub);
+		if(!is_readable($file))
+			throw new Exception('File error: file is not readable - :file', $sub);
+		if(!($fh = fopen($file, 'r')))
+			throw new Exception('File error: file could not be opened - :file', $sub);
+		return $fh;
+		
+	}
+	
+	protected function handle_indent() {
 		
 		$sub = array('line' => $this->line_number);
 		
-		// Find the new indent level.
-		preg_match('/^\s+/', $this->line, $match);
-		if(empty($match)) {
+		if(!preg_match(self::RE_INDENT, $this->line, $match)) {
 			$indent_level = 0;
-		} elseif(!$this->indent) {
-			$this->line = substr($this->line, strlen($match[0]));
-			$this->indent = $match[0];
-			$indent_level = 1;
 		} else {
-			if(str_replace($this->indent, '', $match[0], $indent_level)) {
-				throw new Exception(
-					'Parse error: mixed indentation - line :line',
-					$sub
-				);
+			if(!$this->indent_string) {
+				$this->indent_string = $match[0];
+				$indent_level = 1;
+			} elseif(str_replace($this->indent_string, '', $match[0]) == '') {
+				$indent_level = substr_count($match[0], $this->indent_string);
+			} else {
+				throw new Exception('Parse error: mixed indentation - line :line', $sub);
 			}
 			$this->line = substr($this->line, strlen($match[0]));
 		}
 		
-		if($indent_level < $this->indent_level) {
-			if(!($this->expected_indent & self::INDENT_LESS)) {
-				throw new Exception(
-					'Parse error: did not expect decreased indent - line :line',
-					$sub
-				);
-			}
-			
-			$decrease = $this->indent_level - $indent_level;
-			for($i = 0; $i < $decrease; $i ++)
+		$diff = $indent_level - $this->indent_level;
+		
+		if($diff < 0) {
+			if(!($this->expect_indent & self::EXPECT_LESS))
+				throw new Exception('Parse error: unexpected indent decrease - line :line', $sub);
+			for($i = 0; $i > $diff; $i --)
 				$this->node = $this->node->parent();
-		} elseif($indent_level == $this->indent_level) {
-			if(!($this->expected_indent & self::INDENT_SAME)) {
-				throw new Exception(
-					'Parse error: did not expect same indent - line :line',
-					$sub
-				);
-			}
-		} else {
-			if(!($this->expected_indent & self::INDENT_MORE)) {
-				throw new Exception(
-					'Parse error: did not expect increased indent - line :line',
-					$sub
-				);
-			}
-			
-			if($indent_level - $this->indent_level > 1) {
-				throw new Exception(
-					'Parse error: indent increased by more than 1 - line :line',
-					$sub
-				);
-			}
-			
+		}
+		
+		if($diff > 0) {
+			if(!($this->expect_indent & self::EXPECT_MORE))
+				throw new Exception('Parse error: unexpected indent increase - line :line', $sub);
+			if($diff > 1)
+				throw new Exception('Parse error: indent increased by more than 1 - line :line', $sub);
 			$this->node = $this->node->last_child();
 		}
+		
+		if($diff == 0 and !($this->expect_indent & self::EXPECT_SAME))
+				throw new Exception('Parse error: expected indent to change - line :line', $sub);
 		
 		$this->indent_level = $indent_level;
 		

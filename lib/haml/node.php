@@ -1,59 +1,47 @@
 <?php
 
-/**
- * node.php
- */
-
 namespace hamlparser\lib\haml;
-
-/**
- * The Node class handles the tree representation and parsing of HAML elements.
- */
 
 class Node extends \hamlparser\lib\Node {
 	
-	/**
-	 * Creates a new node and appends it to this node's children.
-	 */
-	public function add_child($parser) {
+	protected static $parser = '/hamlparser/lib/haml/Parser';
+	protected static $multiline = false;
+	
+	public function add_child() {
 		
-		// Ignore empty lines.
-		if(!$this->parser->line())
+		$parser = static::$parser_class;
+		$line = $parser::line();
+		
+		if(static::$multiline) {
+			$this->content .= $line;
+			$parser::expect_indent($parser::EXPECT_SAME);
+			
+			if(substr($line, -1) != ',') {
+				static::$multiline = false;
+				$this->parse();
+				$parser::expect_indent($parser::EXPECT_ANY);
+			}
+			
 			return;
+		}
 		
-		// Decide which node to generate based on the first character.
-		switch(substr($parser->line(), 0, 1)) {
+		switch($line[0]) {
 			case '%':
 			case '.':
 			case '#':
-				$this->children[] = new TagNode($parser, $this);
+				$this->children[] = new TagNode;
+				if(substr($line, -1) == ',') {
+					static::$multiline = true;
+					$parser::expect_indent($parser::EXPECT_MORE);
+				} else {
+					end($this->children)->parse();
+				}
 			break;
 			default:
-				$this->children[] = new TextNode($parser, $this);
-				$parser->expect(Parser::INDENT_LESS | Parser::INDENT_SAME);
+				$this->children[] = new TextNode;
+				$parser::expect_indent($parser::EXPECT_LESS | $parser::EXPECT_SAME);
+			break;
 		}
-		
-	}
-	
-	/**
-	 * Parses the tree from this node.
-	 */
-	public function parse() {
-		
-		foreach($this->children as $child)
-			$child->parse();
-		
-	}
-	
-	/**
-	 * Generates the result of the tree from this node.
-	 */
-	public function __toString() {
-		
-		$return = '';
-		foreach($this->children as $child)
-			$return .= (string)$child;
-		return $return;
 		
 	}
 	
