@@ -39,6 +39,7 @@ class Node extends \hamlparser\lib\Node {
 			break;
 			default:
 				$this->children[] = new TextNode;
+				end($this->children)->parse();
 				$parser::expect_indent($parser::EXPECT_LESS | $parser::EXPECT_SAME);
 			break;
 		}
