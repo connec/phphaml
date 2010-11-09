@@ -13,6 +13,18 @@ class Parser {
 	protected static $node_class = '\hamlparser\lib\Node';
 	protected static $current;
 	
+	protected $options = array(
+		'format' => 'html5',
+		'escape_html' => false,
+		'attr_wrapper' => '"',
+		'autoclose' => array(
+			'meta', 'img',   'link',
+			'br',   'hr',    'input',
+			'area', 'param', 'col',
+			'base'
+		),
+		'preserve' => array('textarea', 'pre')
+	);
 	protected $expect_indent = self::EXPECT_SAME;
 	protected $indent_string = '';
 	protected $indent_level = 0;
@@ -20,6 +32,15 @@ class Parser {
 	protected $line;
 	protected $tree;
 	protected $node;
+	
+	public static function options($key = null) {
+		
+		if(!$key)
+			return $this->options;
+		else
+			return $this->options[$key];
+		
+	}
 	
 	public static function expect_indent($expect_indent) {
 		
@@ -54,6 +75,12 @@ class Parser {
 	public static function node() {
 		
 		return static::$current->node;
+		
+	}
+	
+	public function __construct($options = array()) {
+		
+		$this->options = array_merge($this->options, $options);
 		
 	}
 	
