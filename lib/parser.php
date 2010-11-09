@@ -13,18 +13,7 @@ class Parser {
 	protected static $node_class = '\hamlparser\lib\Node';
 	protected static $current;
 	
-	protected $options = array(
-		'format' => 'html5',
-		'escape_html' => false,
-		'attr_wrapper' => '"',
-		'autoclose' => array(
-			'meta', 'img',   'link',
-			'br',   'hr',    'input',
-			'area', 'param', 'col',
-			'base'
-		),
-		'preserve' => array('textarea', 'pre')
-	);
+	protected $options = array();
 	protected $expect_indent = self::EXPECT_SAME;
 	protected $indent_string = '';
 	protected $indent_level = 0;
