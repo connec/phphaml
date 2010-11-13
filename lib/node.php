@@ -74,6 +74,44 @@ class Node {
 		
 	}
 	
+	public function index_of($child = null) {
+		
+		if(!$child)
+			return $this->parent->index_of($this);
+		return array_search($child, $this->children, true);
+		
+	}
+	
+	public function previous_sibling($child = null) {
+		
+		if(!$child)
+			return $this->parent->previous_sibling($this);
+		
+		if($i = $this->index_of($child)) {
+			if(!isset($this->children[$i - 1]))
+				return false;
+			return $this->children[$i - 1];
+		}
+		
+		return false;
+		
+	}
+	
+	public function next_sibling($child = null) {
+		
+		if(!$child)
+			return $this->parent->next_sibling($this);
+		
+		if($i = $this->index_of($child)) {
+			if(!isset($this->children[$i + 1]))
+				return false;
+			return $this->children[$i + 1];
+		}
+		
+		return false;
+		
+	}
+	
 }
 
 ?>
