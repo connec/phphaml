@@ -11,9 +11,23 @@ class Parser {
 	const EXPECT_ANY = 7;
 	
 	protected static $node_class = '\hamlparser\lib\Node';
+	protected static $doctypes = array(
+		'xhtml' => array(
+			'1.1'          => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+			'5'            => '<!DOCTYPE html>',
+			'basic'        => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">',
+			'frameset'     => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">',
+			'mobile'       => '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">',
+			'rdfa'         => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">',
+			'strict'       => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
+			'transitional' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+		)
+	);
 	protected static $current;
 	
-	protected $options = array();
+	protected $options = array(
+		'format' => 'html5'
+	);
 	protected $expect_indent = self::EXPECT_SAME;
 	protected $indent_string = '';
 	protected $indent_level = 0;
@@ -22,12 +36,20 @@ class Parser {
 	protected $tree;
 	protected $node;
 	
+	public static function doctype($type = 'transitional') {
+		
+		if(!$type or !isset(static::$doctypes[static::options('format')][strtolower($type)]))
+			$type = 'transitional';
+		return static::$doctypes[static::options('format')][strtolower($type)];
+		
+	}
+	
 	public static function options($key = null) {
 		
 		if(!$key)
-			return $this->options;
+			return static::$current->options;
 		else
-			return $this->options[$key];
+			return static::$current->options[$key];
 		
 	}
 	
