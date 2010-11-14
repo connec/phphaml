@@ -2,9 +2,11 @@
 
 namespace hamlparser\lib\haml;
 
-class Node extends \hamlparser\lib\Node {
+class Node extends \hamlparser\lib\RootNode {
 	
-	protected static $parser = '/hamlparser/lib/haml/Parser';
+	const RE_TAG = '/^(?:%[_a-zA-Z]|\.[-_a-zA-Z0-9]|#[a-zA-Z])/';
+	
+	protected static $parser_class = '\hamlparser\lib\haml\Parser';
 	protected static $multiline = false;
 	
 	public function add_child() {
@@ -25,10 +27,8 @@ class Node extends \hamlparser\lib\Node {
 			return;
 		}
 		
-		switch($line[0]) {
-			case '%':
-			case '.':
-			case '#':
+		switch(true) {
+			case preg_match(self::RE_TAG, $line):
 				$this->children[] = new TagNode;
 				if(substr($line, -1) == ',') {
 					static::$multiline = true;
@@ -36,6 +36,10 @@ class Node extends \hamlparser\lib\Node {
 				} else {
 					end($this->children)->parse();
 				}
+			break;
+			case $line[0] == '-':
+				$this->children[] = new PhpNode;
+				end($this->children)->parse();
 			break;
 			default:
 				$this->children[] = new TextNode;

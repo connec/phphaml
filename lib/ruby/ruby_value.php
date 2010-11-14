@@ -6,6 +6,8 @@
 
 namespace hamlparser\lib\ruby;
 
+use hamlparser\lib\Exception;
+
 /**
  * The RubyValue class contains functions for checking if a given string is a 
  * valid Ruby value.

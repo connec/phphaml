@@ -1,0 +1,32 @@
+<?php echo '<?xml version="1.0" encoding="UTF-8" ?>'; ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title><?php echo $title; ?></title>
+	</head>
+	<body>
+		<div id="wrapper">
+			<table id="<?php echo $table; ?>">
+				<?php if($rows) { foreach($rows as $row) { ?>
+					<tr>
+						<?php foreach($row as $k => $v) { ?>
+							<td><?php echo $k; ?> => <?php echo $v; ?></td>
+						<?php } ?>
+					</tr>
+				<?php }} else { ?>
+					Empty list.
+				<?php } ?>
+			</table>
+			<?php if(true) { ?>
+				Well obviously...
+			<?php } elseif(false) { ?>
+				Hrmm, probably not...
+			<?php } else { ?>
+				<?php echo $lol . ' was'; ?>
+			<?php } ?>
+			<div id="footer">
+				&lt;say &amp; what&gt;
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,27 @@
+!!! XML
+!!! Strict
+%html{:xmlns => "http://www.w3.org/1999/xhtml",
+	"xml:lang" => "en", :lang => "en"}
+	
+	%head
+		%title= $title
+	
+	%body
+		#wrapper
+			%table{:id => $table}
+				- foreach($rows as $row)
+					%tr
+						- foreach($row as $k => $v)
+							%td #{$k} => #{$v}
+				- else
+					Empty list.
+			
+			- if(true)
+				Well obviously...
+			- elseif(false)
+				Hrmm, probably not...
+			- else
+				#{$lol . ' was'}
+			
+			#footer
+				& <say & what>

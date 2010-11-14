@@ -7,8 +7,8 @@ use \hamlparser\lib\ruby\RubyHash;
 class TagNode extends Node {
 	
 	const RE_TAG = '/^%([_a-zA-Z][_a-zA-Z0-9:-]*)/';
-	const RE_CLASS = '/^\.(-?[_a-zA-Z][_a-zA-Z0-9-]*)/';
-	const RE_ID = '/^#([a-zA-Z][_a-zA-Z0-9.:-]*)/';
+	const RE_CLASS = '/^\.([_a-zA-Z0-9-]+)/';
+	const RE_ID = '/^#([a-zA-Z][_a-zA-Z0-9:-]*)/';
 	const RE_HASH_ATTRIBUTES = '/^{.*}/';
 	const RE_HTML_ATTRIBUTES = '/^\((.*)\)/';
 	
@@ -28,15 +28,13 @@ class TagNode extends Node {
 		}
 		
 		$this->attributes['class'] = array();
-		while(preg_match(self::RE_CLASS, $this->content, $match)) {
-			$this->attributes['class'][] = $match[1];
-			$this->content = substr($this->content, strlen($match[0]));
-		}
-		
 		$this->attributes['id'] = array();
-		if(preg_match(self::RE_ID, $this->content, $match)) {
-			$this->attributes['id'][] = $match[1];
+		while(preg_match(self::RE_CLASS, $this->content, $match) or preg_match(self::RE_ID, $this->content, $match)) {
 			$this->content = substr($this->content, strlen($match[0]));
+			if($match[0][0] == '.')
+				$this->attributes['class'][] = $match[1];
+			else
+				$this->attributes['id'][0] = $match[1];
 		}
 		
 		if(preg_match(self::RE_HASH_ATTRIBUTES, $this->content, $match)) {
@@ -59,12 +57,19 @@ class TagNode extends Node {
 		}
 		
 		$this->content = trim($this->content);
-		if($this->content)
+		if($this->content) {
+			$this->content = TextNode::parse_inline($this->content);
 			$parser::expect_indent($parser::EXPECT_LESS | $parser::EXPECT_SAME);
+		}elseif(in_array($this->tag, $parser::options('autoclose'))) {
+			$this->self_closing = true;
+			$parser::expect_indent($parser::EXPECT_LESS | $parser::EXPECT_SAME);
+		}
 		
 	}
 	
 	public function __toString() {
+		
+		$parser = static::$parser_class;
 		
 		$indent = str_repeat($this->indent_string, $this->indent_level);
 		
@@ -78,12 +83,17 @@ class TagNode extends Node {
 			if($attribute == 'id')
 				$value = implode('_', $value);
 			
-			$return .= $attribute . '="' . $value . '" ';
+			$return .= $attribute . '=' . Helper::attribute($value) . ' ';
 		}
 		$return = rtrim($return);
 		
-		if($this->self_closing)
-			return $return . " />\n";
+		if($this->self_closing) {
+			if($parser::options('format') == 'xhtml')
+				$return .= ' />';
+			else
+				$return .= '>';
+			return $return . "\n";
+		}
 		
 		$return .= '>';
 		
@@ -92,10 +102,7 @@ class TagNode extends Node {
 		
 		$return .= "\n";
 		
-		for($i = 0; $i < count($this->children); $i ++)
-			$return .= (string)$this->children[$i];
-		
-		return $return . $indent . '</' . $this->tag . ">\n";
+		return $return . $this->child_content() . $indent . '</' . $this->tag . ">\n";
 		
 	}
 	

@@ -2,7 +2,7 @@
 
 namespace hamlparser\lib;
 
-class Parser {
+abstract class Parser {
 	
 	const RE_INDENT = '/^\s+/';
 	const EXPECT_LESS = 1;
@@ -10,24 +10,11 @@ class Parser {
 	const EXPECT_MORE = 4;
 	const EXPECT_ANY = 7;
 	
-	protected static $node_class = '\hamlparser\lib\Node';
-	protected static $doctypes = array(
-		'xhtml' => array(
-			'1.1'          => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
-			'5'            => '<!DOCTYPE html>',
-			'basic'        => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">',
-			'frameset'     => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">',
-			'mobile'       => '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">',
-			'rdfa'         => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">',
-			'strict'       => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
-			'transitional' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
-		)
-	);
 	protected static $current;
 	
-	protected $options = array(
-		'format' => 'html5'
-	);
+	protected $source;
+	protected $options;
+	protected $output;
 	protected $expect_indent = self::EXPECT_SAME;
 	protected $indent_string = '';
 	protected $indent_level = 0;
@@ -35,14 +22,6 @@ class Parser {
 	protected $line;
 	protected $tree;
 	protected $node;
-	
-	public static function doctype($type = 'transitional') {
-		
-		if(!$type or !isset(static::$doctypes[static::options('format')][strtolower($type)]))
-			$type = 'transitional';
-		return static::$doctypes[static::options('format')][strtolower($type)];
-		
-	}
 	
 	public static function options($key = null) {
 		
@@ -89,30 +68,49 @@ class Parser {
 		
 	}
 	
-	public function __construct($options = array()) {
+	public function __construct($source, $options = array()) {
 		
+		$this->source = $source;
 		$this->options = array_merge($this->options, $options);
+		
+		if(is_file($this->source))
+			$this->source = open_file($this->source);
+		else
+			$this->source = explode("\n", str_replace(array("\r\n", "\r"), "\n", $this->source));
 		
 	}
 	
-	public function parse($file) {
+	public function parse() {
 		
 		static::$current = $this;
 		
 		$node_class = static::$node_class;
 		$this->tree = $this->node = new $node_class;
 		
-		$file = $this->open_file($file);
-		while($this->line = rtrim(fgets($file), "\r\n")) {
+		while($this->line = rtrim($this->get_line(), "\r\n")) {
 			$this->line_number ++;
 			
 			$this->handle_indent();
 			$this->expect_indent = self::EXPECT_ANY;
 			
-			$this->node->add_child();
+			if(trim($this->line) != '')
+				$this->node->add_child();
 		}
 		
-		return rtrim((string)$this->tree);
+		$this->output = rtrim((string)$this->tree);
+		return $this->output;
+		
+	}
+	
+	protected function get_line() {
+		
+		if(is_array($this->source)) {
+			$line = current($this->source);
+			next($this->source);
+			return $line;
+		}
+		
+		return fgets($this->source);
 		
 	}
 	
