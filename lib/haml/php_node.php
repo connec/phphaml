@@ -64,6 +64,9 @@ class PhpNode extends Node {
 			}
 		}
 		
+		if(!$this->type)
+			$this->content = '<?php ' . $this->content . '; ?>';
+		
 	}
 	
 	public function __toString() {
