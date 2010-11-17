@@ -4,7 +4,7 @@
  * ruby_list.php
  */
 
-namespace hamlparser\lib\ruby;
+namespace haml\ruby;
 
 /**
  * The RubyList class parses a ruby list (as a string).

@@ -1,11 +1,11 @@
 <?php
 
-use \hamlparser\lib\haml\Parser;
+use \haml\haml\Parser;
 
-require '../lib.php';
+require '../haml.php';
 require 'diff.php';
 
-\hamlparser\Lib::autoload();
+\haml\Haml::autoload();
 
 $options = array(
 	'4' => array(

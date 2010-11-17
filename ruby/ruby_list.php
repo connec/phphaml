@@ -4,9 +4,9 @@
  * ruby_list.php
  */
 
-namespace hamlparser\lib\ruby;
+namespace hamlparser\ruby;
 
-use \hamlparser\lib\Exception;
+use \haml\Exception;
 
 /**
  * The RubyList class provides the base for RubyHash and RubyArray classes
@@ -164,11 +164,8 @@ abstract class RubyList {
 			break;
 			case '$':
 				$re = '/^\$[a-zA-Z_][a-zA-Z0-9_]*$/';
-				if(!preg_match($re, $value)) {
-					throw new Exception(
-						'Syntax error: invalid syntax for variable'
-					);
-				}
+				if(!preg_match($re, $value))
+					throw new Exception('Syntax error: invalid syntax for variable');
 				$value = '<?php echo ' . $value . '; ?>';
 			break;
 			default:

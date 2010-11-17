@@ -4,13 +4,13 @@
  * lib.php
  */
 
-namespace hamlparser;
+namespace haml;
 
 /**
- * The hamlparser\Lib class is the include point for the library.
+ * The haml\Haml class is the include point for the library.
  */
 
-class Lib {
+class Library {
 	
 	protected static $dir;
 	

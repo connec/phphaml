@@ -4,10 +4,10 @@
  * haml_exception.php
  */
 
-namespace hamlparser\lib;
+namespace haml;
 
 /**
- * The base exception class for the haml_parser library.
+ * The base exception class for the haml library.
  */
 
 class Exception extends \Exception {
