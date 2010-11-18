@@ -269,7 +269,7 @@ abstract class Parser {
 	}
 	
 	/**
-	 * Throws an exception with the given method and substitution, and appends
+	 * Throws an exception with the given message and substitution, and appends
 	 * the line number.
 	 */
 	protected function exception($message, $sub = array()) {
