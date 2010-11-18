@@ -168,9 +168,17 @@ class Parser extends \haml\Parser {
 			
 		}
 		
-		if(substr($this->line, -1) == '/') {
-			$this->line = substr($this->line, 0, -1);
+		if($this->line[0] == '/') {
+			if($this->line != '/')
+				$this->exception('Parse error: self-closing tags cannot have inline content');
+			
+			$this->line = '';
 			$node->self_closing = true;
+		}
+		
+		if($this->line) {
+			$node->inline_content = trim($this->line);
+			$this->line = '';
 		}
 		
 		$this->context->children[] = $node;

@@ -28,6 +28,11 @@ class TagNode extends Node {
 	public $self_closing = false;
 	
 	/**
+	 * This tag's inline content, if any exists.
+	 */
+	public $inline_content;
+	
+	/**
 	 * Generates and returns the output for this Node's subtree.
 	 */
 	public function render() {
@@ -44,7 +49,7 @@ class TagNode extends Node {
 		}
 		
 		if(empty($this->children))
-			return $open_tag . $close_tag;
+			return $open_tag . $this->inline_content . $close_tag;
 		
 		return $open_tag . "\n"
 			. $this->render_children() . "\n"
