@@ -28,6 +28,11 @@ class Parser extends \haml\Parser {
 	const RE_TAG_START = '/^(?:(%[a-z_])|(\.[a-z0-9_-])|(#[a-z]))/i';
 	
 	/**
+	 * A regular expression matching any character.
+	 */
+	const RE_ANY = '/./';
+	
+	/**
 	 * A regular expression for extracting a tag name.
 	 */
 	const RE_TAG = '/^%[a-z_][a-z0-9_:-]*/i';
@@ -52,7 +57,7 @@ class Parser extends \haml\Parser {
 		self::RE_XML       => 'xml_prolog',
 		self::RE_DOCTYPE   => 'doctype',
 		self::RE_TAG_START => 'tag',
-		'/./'              => 'text'
+		self::RE_ANY       => 'text'
 	);
 	
 	/**
@@ -83,6 +88,11 @@ class Parser extends \haml\Parser {
 		'preserve' => array('textarea', 'pre'),
 		'encoding' => 'utf-8'
 	);
+	
+	/**
+	 * An unfinished multiline node waiting to be added to the tree.
+	 */
+	protected $multiline;
 	
 	/**
 	 * Constructs the parser, given a source and options.
@@ -165,12 +175,16 @@ class Parser extends \haml\Parser {
 			
 			$this->line = '';
 			$node->self_closing = true;
+			
+			$this->expect_indent = self::EXPECT_LESS | self::EXPECT_SAME;
 		}
 		
 		if($this->line) {
 			$node->inline_content = new TextNode($this->document, null, 0, 0);
 			$node->inline_content->content = trim($this->line);
 			$this->line = '';
+			
+			$this->expect_indent = self::EXPECT_LESS | self::EXPECT_SAME;
 		}
 		
 		$this->context->children[] = $node;
