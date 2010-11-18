@@ -32,18 +32,23 @@ class TagNode extends Node {
 	 */
 	public function render() {
 		
-		$render = '<' . $this->tag;
-		
-		if(!empty($this->attributes))
-			$render .= ' ' . $this->attributes();
+		$indent = str_repeat($this->document->indent_string, $this->indent_level);
+		$open_tag = $indent . '<' . $this->tag . (empty($this->attributes) ? '' : ' ' . $this->attributes()) . '>';
+		$close_tag = '</' . $this->tag . '>';
 		
 		if($this->self_closing) {
 			if($this->document->options['format'] == 'xhtml')
-				$render .= ' /';
-			return $render . '>';
+				return substr($open_tag, 0, -1) . ' />';
+			else
+				return $open_tag;
 		}
 		
-		return $render . '></' . $this->tag . '>';
+		if(empty($this->children))
+			return $open_tag . $close_tag;
+		
+		return $open_tag . "\n"
+			. $this->render_children() . "\n"
+			. $indent . $close_tag;
 		
 	}
 	

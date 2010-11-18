@@ -209,22 +209,29 @@ abstract class Parser {
 	 */
 	protected function update_context() {
 		
-		$indent_level = 0;
-		
 		$re = '/^\s+/';
 		preg_match($re, $this->line, $match);
 		if($match) {
-			if($this->indent_string)
+			if($this->indent_string) {
 				$indent_level = substr_count($this->line, $this->indent_string);
-			else
+			} else {
+				$indent_level = 1;
 				$this->indent_string = $match[0];
+				$this->document->indent_string = $match[0];
+			}
 			
 			$this->line = substr($this->line, strlen($match[0]));
+		} else {
+			$indent_level = 0;
 		}
 		
 		if($indent_level < $this->indent_level) {
 			if(!($this->expect_indent & self::EXPECT_LESS))
 				$this->exception('Parse error: unexpected indentation decrease');
+			
+			$difference = $this->indent_level - $indent_level;
+			while($difference--)
+				$this->context = $this->context->parent;
 		}
 		
 		if($indent_level == $this->indent_level) {
@@ -235,8 +242,13 @@ abstract class Parser {
 		if($indent_level > $this->indent_level) {
 			if(!($this->expect_indent & self::EXPECT_MORE))
 				$this->exception('Parse error: unexpected indentation increase');
+			if($indent_level - $this->indent_level > 1)
+				$this->exception('Parse error: indent increased by more than 1');
+			
+			$this->context = end($this->context->children);
 		}
 		
+		$this->indent_level = $indent_level;
 		$this->expect_indent = self::EXPECT_ANY;
 		
 	}

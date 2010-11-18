@@ -141,7 +141,7 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_tag($match) {
 		
-		$node = new TagNode($this->document, $this->context);
+		$node = new TagNode($this->document, $this->context, $this->indent_level);
 		
 		if($match[0][0] == '%') {
 			preg_match(self::RE_TAG, $this->line, $match);

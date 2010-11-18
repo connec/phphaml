@@ -28,12 +28,18 @@ abstract class Node {
 	public $children = array();
 	
 	/**
+	 * The indent level of this node.
+	 */
+	public $indent_level;
+	
+	/**
 	 * Initialises the node.
 	 */
-	public function __construct($document, $parent) {
+	public function __construct($document, $parent, $indent_level) {
 		
 		$this->document = $document;
 		$this->parent = $parent;
+		$this->indent_level = $indent_level;
 		
 	}
 	

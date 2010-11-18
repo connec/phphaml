@@ -32,6 +32,11 @@ abstract class Document {
 	public $children = array();
 	
 	/**
+	 * The string used for indentation in the source.
+	 */
+	public $indent_string;
+	
+	/**
 	 * The output generated during rendering.
 	 */
 	protected $output = '';
