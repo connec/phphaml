@@ -61,7 +61,7 @@ foreach($contexts as $context) {
 		$input = htmlentities(str_replace("\r", '', $test->haml));
 		$expected = trim(str_replace("\r", '', $test->html));
 		
-		if($output == $expected)
+		if(!$error and $output == $expected)
 			$success = true;
 		else
 			$success = false;
