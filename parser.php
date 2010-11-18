@@ -37,9 +37,9 @@ abstract class Parser {
 	const EXPECT_ANY = 7;
 	
 	/**
-	 * The class to use for the parsed document.
+	 * The namespace this Parser is in.
 	 */
-	protected static $document_class = '\haml\Document';
+	protected static $namespace;
 	
 	/**
 	 * An array mapping regular expressions to callbacks for handling different
@@ -122,12 +122,27 @@ abstract class Parser {
 	 */
 	public function __construct($source, $options = array()) {
 		
+		if(!static::$namespace)
+			static::$namespace = str_replace('Parser', '', get_class($this));
+		
 		if(is_file($source))
 			$this->source = static::open_file($source);
 		else
 			$this->source = explode("\n", str_replace(array("\r\n", "\r"), "\n", $source));
 		
 		$this->options = array_merge($this->options, $options);
+		
+	}
+	
+	/**
+	 * Creates the specified child node.
+	 * 
+	 * Node classes are expected to be in the same namespace as the Parser class.
+	 */
+	protected function create_node($type) {
+		
+		$class = static::$namespace . ucfirst($type) . 'Node';
+		return new $class($this->document, $this->context, $this->line_number, $this->indent_level);
 		
 	}
 	
@@ -139,7 +154,7 @@ abstract class Parser {
 	 */
 	public function parse() {
 		
-		$document = static::$document_class;
+		$document = static::$namespace . 'Document';
 		$this->document = new $document($this, $this->options);
 		$this->context = $this->document;
 		

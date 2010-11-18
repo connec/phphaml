@@ -43,16 +43,6 @@ class Parser extends \haml\Parser {
 	const RE_ID = '/^#[a-z][a-z0-9_:-]*/i';
 	
 	/**
-	 * The class to use for the parsed document.
-	 */
-	protected static $document_class = '\haml\haml\Document';
-	
-	/**
-	 * A temporary string for building multiline nodes.
-	 */
-	protected $buffer;
-	
-	/**
 	 * An array mapping regular expressions to callbacks for handling different
 	 * source lines.
 	 * 
@@ -142,7 +132,7 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_tag($match) {
 		
-		$node = new TagNode($this->document, $this->context, $this->indent_level);
+		$node = $this->create_node('tag');
 		
 		if($match[0][0] == '%') {
 			preg_match(self::RE_TAG, $this->line, $match);
@@ -178,7 +168,7 @@ class Parser extends \haml\Parser {
 		}
 		
 		if($this->line) {
-			$node->inline_content = new TextNode($this->document, null, 0);
+			$node->inline_content = new TextNode($this->document, null, 0, 0);
 			$node->inline_content->content = trim($this->line);
 			$this->line = '';
 		}
@@ -192,7 +182,7 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_text($match) {
 		
-		$node = new TextNode($this->document, $this->context, $this->indent_level);
+		$node = $this->create_node('text');
 		$node->content = trim($this->line);
 		$this->line = '';
 		$this->context->children[] = $node;

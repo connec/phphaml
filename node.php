@@ -28,6 +28,11 @@ abstract class Node {
 	public $children = array();
 	
 	/**
+	 * The line number of this node.
+	 */
+	public $line_number;
+	
+	/**
 	 * The indent level of this node.
 	 */
 	public $indent_level;
@@ -35,10 +40,11 @@ abstract class Node {
 	/**
 	 * Initialises the node.
 	 */
-	public function __construct($document, $parent, $indent_level) {
+	public function __construct($document, $parent, $line_number, $indent_level) {
 		
 		$this->document = $document;
 		$this->parent = $parent;
+		$this->line_number = $line_number;
 		$this->indent_level = $indent_level;
 		
 	}
