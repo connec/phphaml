@@ -1,13 +1,13 @@
 <?php
 
 /**
- * tag.php
+ * tag_node.php
  */
 
 namespace haml\haml;
 
 /**
- * The Tag class represents a tag node in a HAML document.
+ * The TagNode class represents a tag node in a HAML document.
  */
 
 class TagNode extends Node {
@@ -48,8 +48,11 @@ class TagNode extends Node {
 				return $open_tag;
 		}
 		
-		if(empty($this->children))
-			return $open_tag . $this->inline_content . $close_tag;
+		if(empty($this->children)) {
+			return $open_tag
+				. ($this->inline_content ? $this->inline_content->render() : '')
+				. $close_tag;
+		}
 		
 		return $open_tag . "\n"
 			. $this->render_children() . "\n"

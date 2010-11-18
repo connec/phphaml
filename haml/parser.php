@@ -177,7 +177,8 @@ class Parser extends \haml\Parser {
 		}
 		
 		if($this->line) {
-			$node->inline_content = trim($this->line);
+			$node->inline_content = new TextNode($this->document, null, 0);
+			$node->inline_content->content = trim($this->line);
 			$this->line = '';
 		}
 		
