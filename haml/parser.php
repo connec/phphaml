@@ -61,7 +61,8 @@ class Parser extends \haml\Parser {
 	protected static $handlers = array(
 		self::RE_XML       => 'xml_prolog',
 		self::RE_DOCTYPE   => 'doctype',
-		self::RE_TAG_START => 'tag'
+		self::RE_TAG_START => 'tag',
+		'/./'              => 'text'
 	);
 	
 	/**
@@ -182,6 +183,18 @@ class Parser extends \haml\Parser {
 			$this->line = '';
 		}
 		
+		$this->context->children[] = $node;
+		
+	}
+	
+	/**
+	 * Handles a text node.
+	 */
+	protected function handle_text($match) {
+		
+		$node = new TextNode($this->document, $this->context, $this->indent_level);
+		$node->content = trim($this->line);
+		$this->line = '';
 		$this->context->children[] = $node;
 		
 	}
