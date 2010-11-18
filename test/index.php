@@ -1,6 +1,24 @@
 <html>
 	<head>
 		<style type="text/css">
+			.heading {
+				background-color: #999;
+				text-align: center;
+				font-size: 2em;
+			}
+			
+			.heading .success, .heading .failure {
+				background-color: transparent;
+			}
+			
+			.heading .success {
+				color: #9f9;
+			}
+			
+			.heading .failure {
+				color: #f99;
+			}
+			
 			h4 {
 				margin: 0;
 				margin-top: 0.5em;

@@ -13,8 +13,19 @@ $options = array(
 	)
 );
 
+$tpl_header = <<< 'END'
+<div class="heading">
+<span class="success">%1$d</span>
+/
+<span class="failure">%2$d</span>
+(
+<span class="percent">%3$d&#37;</span>
+)
+</div>
+END;
+
 $tpl_container = <<< 'END'
-<h4 class="test_heading %1$s" onclick="toggle(test_%2$d);">%3$s (%4$s) %5$s</h4>
+<h4 class="test_heading %1$s" onclick="toggle(test_%2$d);">%2$d) %3$s (%4$s) %5$s</h4>
 <div class="container %1$s" id="test_%2$d">
 %6$s
 %7$s
@@ -32,12 +43,16 @@ $tpl_test = <<< 'END'
 END;
 
 $contexts = json_decode(file_get_contents('references/tests.json'));
+$total = 0;
+$passed = 0;
+$failed = 0;
 
-$i = 0;
+ob_start();
+
 foreach($contexts as $context) {
 	foreach($context as $name => $test) {
 		
-		$i ++;
+		$total ++;
 		
 		if(!isset($test->locals))
 			$test->locals = new StdClass;
@@ -61,15 +76,24 @@ foreach($contexts as $context) {
 		$input = htmlentities(str_replace("\r", '', $test->haml));
 		$expected = trim(str_replace("\r", '', $test->html));
 		
-		if(!$error and $output == $expected)
+		if(!$error and $output == $expected) {
 			$success = true;
-		else
+			$passed ++;
+		} else {
 			$success = false;
+			$failed ++;
+		}
 		
 		$test_result = sprintf($tpl_test, $input, diff($expected, $output));
-		printf($tpl_container, $success ? 'success' : 'failure', $i, $name, $success ? 'Success' : 'Failure', $time, $error, $test_result);
+		printf($tpl_container, $success ? 'success' : 'failure', $total, $name, $success ? 'Success' : 'Failure', $time, $error, $test_result);
 		
 	}
 }
+
+$percent = (int)round($passed*100 / $total, 0);
+
+$output = ob_get_clean();
+printf($tpl_header, $passed, $total, $percent);
+echo $output;
 
 ?>
