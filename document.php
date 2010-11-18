@@ -22,19 +22,14 @@ namespace haml;
 abstract class Document {
 	
 	/**
-	 * The parser generating the document.
-	 */
-	protected $parser;
-	
-	/**
 	 * An array of options affecting output generation.
 	 */
-	protected $options = array();
+	public $options = array();
 	
 	/**
 	 * An array of child nodes.
 	 */
-	protected $children = array();
+	public $children = array();
 	
 	/**
 	 * The output generated during rendering.
@@ -46,8 +41,8 @@ abstract class Document {
 	 */
 	public function __construct($parser, $options) {
 		
-		$this->parser = $parser;
 		$this->options = array_merge($this->options, $options);
+		$this->context = $this;
 		
 	}
 	

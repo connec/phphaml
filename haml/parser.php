@@ -13,6 +13,21 @@ namespace haml\haml;
 class Parser extends \haml\Parser {
 	
 	/**
+	 * A regular expression for matching an XML prolog.
+	 */
+	const RE_XML = '/^!!! xml(?: (.+))?$/i';
+	
+	/**
+	 * A regular expression for matching a DOCTYPE.
+	 */
+	const RE_DOCTYPE = '/^!!!(?: (.+))?$/';
+	
+	/**
+	 * A regular expression for matching the start of a tag line.
+	 */
+	const RE_TAG_START = '/^(?:(%[a-z_])|(\.[a-z0-9_-])|(#[a-z]))/i';
+	
+	/**
 	 * A regular expression for extracting a tag name.
 	 */
 	const RE_TAG = '/^%[a-z_][a-z0-9_:-]*/i';
@@ -33,15 +48,20 @@ class Parser extends \haml\Parser {
 	protected static $document_class = '\haml\haml\Document';
 	
 	/**
+	 * A temporary string for building multiline nodes.
+	 */
+	protected $buffer;
+	
+	/**
 	 * An array mapping regular expressions to callbacks for handling different
 	 * source lines.
 	 * 
 	 * Handlers are matched in the order defined.
 	 */
 	protected static $handlers = array(
-		'/^!!! xml(?: (.+))?/i' => 'xml_prolog',
-		'/^!!!(?: (.+))?/i' => 'doctype',
-		'/^(?:(%[a-z_])|(\.[a-z0-9_-])|(#[a-z]))/i' => 'tag'
+		self::RE_XML       => 'xml_prolog',
+		self::RE_DOCTYPE   => 'doctype',
+		self::RE_TAG_START => 'tag'
 	);
 	
 	/**
@@ -88,9 +108,14 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_xml_prolog($match) {
 		
+		if($this->indent_level > 0)
+			$this->exception('Parse error: XML prolog can not be indented');
+		
 		$this->document->xml_prolog = true;
 		if(isset($match[1]))
 			$this->document->xml_encoding = $match[1];
+		
+		$this->expect_indent = self::EXPECT_SAME;
 		
 	}
 	
@@ -99,10 +124,40 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_doctype($match) {
 		
+		if($this->indent_level > 0)
+			$this->exception('Parse error: XML prolog can not be indented');
+		
 		if(isset($match[1]))
 			$this->document->doctype = $match[1];
 		else
 			$this->document->doctype = 'transitional';
+		
+		$this->expect_indent = self::EXPECT_SAME;
+		
+	}
+	
+	/**
+	 * Handles a tag line.
+	 */
+	protected function handle_tag($match) {
+		
+		$node = new TagNode($this->document, $this->context);
+		
+		if($match[0][0] == '%') {
+			preg_match(self::RE_TAG, $this->line, $match);
+			$this->line = substr($this->line, strlen($match[0]));
+			$node->tag = substr($match[0], 1);
+			
+			if(in_array($node->tag, $this->options['autoclose']))
+				$node->self_closing = true;
+		}
+		
+		if(substr($this->line, -1) == '/') {
+			$this->line = substr($this->line, 0, -1);
+			$node->self_closing = true;
+		}
+		
+		$this->context->children[] = $node;
 		
 	}
 	

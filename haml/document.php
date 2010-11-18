@@ -89,6 +89,9 @@ class Document extends \haml\Document {
 				$this->output[] = static::$doctypes[$this->options['format']][$this->doctype];
 		}
 		
+		foreach($this->children as $child)
+			$this->output[] = $child->render();
+		
 		return implode("\n", $this->output);
 		
 	}

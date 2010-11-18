@@ -2,10 +2,10 @@
 
 use \haml\haml\Parser;
 
-require '../haml.php';
+require '../library.php';
 require 'diff.php';
 
-\haml\Haml::autoload();
+\haml\Library::autoload();
 
 $options = array(
 	'4' => array(

@@ -95,6 +95,11 @@ abstract class Parser {
 	protected $document;
 	
 	/**
+	 * The context Node / Document.
+	 */
+	protected $context;
+	
+	/**
 	 * Returns a handle to the given file.
 	 */
 	protected static function open_file($file) {
@@ -136,6 +141,7 @@ abstract class Parser {
 		
 		$document = static::$document_class;
 		$this->document = new $document($this, $this->options);
+		$this->context = $this->document;
 		
 		while($this->line = $this->get_line()) {
 			$this->line_number ++;
