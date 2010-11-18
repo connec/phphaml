@@ -18,6 +18,11 @@ class TagNode extends Node {
 	public $tag = 'div';
 	
 	/**
+	 * An array of attributes for this tag.
+	 */
+	public $attributes = array();
+	
+	/**
 	 * A flag indicating whether or not this tag is self-closing.
 	 */
 	public $self_closing = false;
@@ -29,13 +34,39 @@ class TagNode extends Node {
 		
 		$render = '<' . $this->tag;
 		
+		if(!empty($this->attributes))
+			$render .= ' ' . $this->attributes();
+		
 		if($this->self_closing) {
 			if($this->document->options['format'] == 'xhtml')
 				$render .= ' /';
 			return $render . '>';
 		}
 		
-		return '<' . $this->tag . '></' . $this->tag . '>';
+		return $render . '></' . $this->tag . '>';
+		
+	}
+	
+	/**
+	 * Generates the attribute string for this tag.
+	 */
+	protected function attributes() {
+		
+		if(empty($this->attributes))
+			return '';
+		
+		ksort($this->attributes);
+		$attributes = $this->attributes;
+		
+		if(isset($attributes['class'])) {
+			sort($attributes['class']);
+			$attributes['class'] = implode(' ', $attributes['class']);
+		}
+		
+		if(isset($attributes['id']))
+			$attributes['id'] = implode('_', $attributes['id']);
+		
+		return $this->document->attributes($attributes);
 		
 	}
 	

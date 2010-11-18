@@ -100,11 +100,14 @@ class Document extends \haml\Document {
 	 * Generates an XML attribute string given an array of attribute => value 
 	 * pairs.
 	 */
-	protected function attributes($attributes) {
+	public function attributes($attributes) {
 		
 		$_attributes = array();
-		foreach($attributes as $attribute => $value)
+		foreach($attributes as $attribute => $value) {
+			if(empty($value))
+				continue;
 			$_attributes[] = $attribute . '=' . static::wrap($value, $this->options['attr_wrapper']);
+		}
 		return implode(' ', $_attributes);
 		
 	}

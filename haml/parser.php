@@ -152,6 +152,22 @@ class Parser extends \haml\Parser {
 				$node->self_closing = true;
 		}
 		
+		while(preg_match(self::RE_CLASS, $this->line, $match)
+			 or preg_match(self::RE_ID,    $this->line, $match)) {
+		 	
+			$this->line = substr($this->line, strlen($match[0]));
+			
+			$name = substr($match[0], 1);
+			if($match[0][0] == '.') {
+				if(!isset($node->attributes['class']))
+					$node->attributes['class'] = array();
+				$node->attributes['class'][] = $name;
+			} else {
+				$node->attributes['id'] = array($name);
+			}
+			
+		}
+		
 		if(substr($this->line, -1) == '/') {
 			$this->line = substr($this->line, 0, -1);
 			$node->self_closing = true;
