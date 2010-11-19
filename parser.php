@@ -141,7 +141,12 @@ abstract class Parser {
 	 */
 	protected function create_node($type) {
 		
-		$class = static::$namespace . ucfirst($type) . 'Node';
+		$parts = explode('_', $type);
+		$type = '';
+		foreach($parts as $part)
+			$type .= ucfirst($part);
+		
+		$class = static::$namespace . $type . 'Node';
 		return new $class($this->document, $this->context, $this->line_number, $this->indent_level);
 		
 	}

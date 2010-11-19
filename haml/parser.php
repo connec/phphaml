@@ -29,12 +29,6 @@ class Parser extends \haml\Parser {
 	const MULTILINE_HASH_ATTRIBUTES = 64;
 	
 	/**
-	 * A flag indicating the next line is expected to continue a multiline HAML
-	 * comment.
-	 */
-	const MULTILINE_HAML_COMMENT = 128;
-	
-	/**
 	 * A regular expression for matching an XML prolog.
 	 */
 	const RE_XML = '/^!!! xml(?: (.+))?$/i';
@@ -429,7 +423,7 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_haml_comment() {
 		
-		return true;
+		$this->document->children[] = $this->create_node('haml_comment');
 		
 	}
 	
@@ -449,6 +443,8 @@ class Parser extends \haml\Parser {
 		$node->content = new RubyInterpolatedString(trim($this->line));
 		$this->line = '';
 		$this->context->children[] = $node;
+		
+		$this->expect_indent = self::EXPECT_LESS | self::EXPECT_SAME;
 		
 	}
 	
