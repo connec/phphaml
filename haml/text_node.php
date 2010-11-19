@@ -24,9 +24,8 @@ class TextNode extends \haml\Node {
 	 */
 	public function render() {
 		
-		$content = new RubyInterpolatedString($this->content);
 		return str_repeat($this->document->indent_string, $this->indent_level)
-			. $content->to_text($this->document->variables);
+			. $this->content->to_text($this->document->variables);
 		
 	}
 	

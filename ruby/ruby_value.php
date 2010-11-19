@@ -35,27 +35,27 @@ class RubyValue {
 	
 	public static function string_to_string($string) {
 		
-		if(preg_match("/^.+[^\\\\]{$string[0]}.+$/", $string)) {
-			throw new Exception(
-				'Syntax error: unescaped ":char" in string',
-				array('char' => $string[0])
-			);
-		}
-		if($string[0] != $string[strlen($string) - 1]) {
+		$enclosure = $string[0];
+		
+		if($enclosure != $string[strlen($string) - 1]) {
 			throw new Exception(
 				'Syntax error: unexpected ":char1" at end of string, expected ":char2"',
-				array('char1' => $string[strlen($string) - 1], 'char2' => $string[0])
+				array('char1' => $string[strlen($string) - 1], 'char2' => $enclosure)
 			);
 		}
-		if($string[0] == '"') {
-			$string = preg_replace('/([^\\\\])#{(.*?)}/', '$1<?php echo $2; ?>', $string);
-			if(strpos($string, '#{') !== false) {
-				throw new Exception(
-					'Syntax error: no closing "}" for open "#{"'
-				);
-			}
+		$string = substr($string, 1, -1);
+		
+		if(preg_match("/(?:[^\\\\]|[\\\\]{2}){$enclosure}/", $string)) {
+			throw new Exception(
+				'Syntax error: unescaped ":char" in string',
+				array('char' => $enclosure)
+			);
 		}
-		return new RubyInterpolatedString(substr($string, 1, -1));
+		
+		if($enclosure == '"')
+			$string = new RubyInterpolatedString($string);
+		
+		return $string;
 		
 	}
 	

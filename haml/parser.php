@@ -6,7 +6,9 @@
 
 namespace haml\haml;
 
-use \haml\ruby\RubyInterpolatedString;
+use
+	\haml\ruby\RubyInterpolatedString,
+	\haml\ruby\RubyHash;
 
 /**
  * The Parser class is the parser implementation for HAML.
@@ -27,6 +29,12 @@ class Parser extends \haml\Parser {
 	const MULTILINE_HASH_ATTRIBUTES = 64;
 	
 	/**
+	 * A flag indicating the next line is expected to continue a multiline HAML
+	 * comment.
+	 */
+	const MULTILINE_HAML_COMMENT = 128;
+	
+	/**
 	 * A regular expression for matching an XML prolog.
 	 */
 	const RE_XML = '/^!!! xml(?: (.+))?$/i';
@@ -40,6 +48,16 @@ class Parser extends \haml\Parser {
 	 * A regular expression for matching the start of a tag line.
 	 */
 	const RE_TAG_START = '/^(?:(%[a-z_])|(\.[a-z0-9_-])|(#[a-z]))/i';
+	
+	/**
+	 * A regular expression for matching HAML comments.
+	 */
+	const RE_HAML_COMMENT = '/^-#/';
+	
+	/**
+	 * A regular expression for matching the start of a PHP node.
+	 */
+	const RE_PHP_NODE = '/^-/';
 	
 	/**
 	 * A regular expression matching any character.
@@ -62,6 +80,11 @@ class Parser extends \haml\Parser {
 	const RE_ID = '/^#[a-z][a-z0-9_:-]*/i';
 	
 	/**
+	 * A regular expression for extracting an attribute hash.
+	 */
+	const RE_ATTRIBUTE_HASH = '/{.*}/';
+	
+	/**
 	 * A regular expression for matching a valid HTML attribute.
 	 */
 	const RE_ATTRIBUTE_NAME = '/^[a-z:_][a-z0-9:._-]*$/i';
@@ -78,10 +101,11 @@ class Parser extends \haml\Parser {
 	 * Handlers are matched in the order defined.
 	 */
 	protected static $handlers = array(
-		self::RE_XML       => 'xml_prolog',
-		self::RE_DOCTYPE   => 'doctype',
-		self::RE_TAG_START => 'tag_start',
-		self::RE_ANY       => 'any'
+		self::RE_XML          => 'xml_prolog',
+		self::RE_DOCTYPE      => 'doctype',
+		self::RE_TAG_START    => 'tag_start',
+		self::RE_HAML_COMMENT => 'haml_comment',
+		self::RE_ANY          => 'any'
 	);
 	
 	/**
@@ -150,6 +174,9 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_xml_prolog($match) {
 		
+		if($this->document->doctype or !empty($this->document->children))
+			$this->exception('Parse error: XML prolog must be the first content in the document');
+		
 		if($this->indent_level > 0)
 			$this->exception('Parse error: XML prolog can not be indented');
 		
@@ -165,6 +192,9 @@ class Parser extends \haml\Parser {
 	 * Handles a DOCTYPE decleration.
 	 */
 	protected function handle_doctype($match) {
+		
+		if(!empty($this->document->children))
+			$this->exception('Parse error: DOCTYPE must come before any content');
 		
 		if($this->indent_level > 0)
 			$this->exception('Parse error: XML prolog can not be indented');
@@ -327,7 +357,40 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_hash_attributes() {
 		
-		return true;
+		static $line = '';
+		
+		if(substr($this->line, -1) == ',') {
+			$line .= $this->line;
+			return false;
+		}
+		
+		$this->line = $line . $this->line;
+		$line = '';
+		
+		if(preg_match(self::RE_ATTRIBUTE_HASH, $this->line, $match)) {
+			try {
+				$hash = new RubyHash($match[0]);
+				$hash = $hash->to_a();
+			} catch(Exception $e) {
+				$this->exception($e->getMessage());
+			}
+			
+			foreach(array('class', 'id') as $field) {
+				if(isset($hash[$field])) {
+					if(isset($this->node->attributes[$field]))
+						$this->node->attributes[$field][] = $hash[$field];
+					else
+						$this->node->attributes[$field] = array($hash[$field]);
+					unset($hash[$field]);
+				}
+			}
+			$this->node->attributes = array_merge($this->node->attributes, $hash);
+			
+			$this->line = substr($this->line, strlen($match[0]));
+			return true;
+		}
+		
+		$this->exception('Syntax error: invalid hash');
 		
 	}
 	
@@ -350,7 +413,7 @@ class Parser extends \haml\Parser {
 		
 		if($this->line) {
 			$node->inline_content = new TextNode($this->document, null, 0, 0);
-			$node->inline_content->content = trim($this->line);
+			$node->inline_content->content = new RubyInterpolatedString(trim($this->line));
 			$this->line = '';
 			
 			$this->expect_indent = self::EXPECT_LESS | self::EXPECT_SAME;
@@ -362,7 +425,16 @@ class Parser extends \haml\Parser {
 	}
 	
 	/**
-	 * Handles a text node.
+	 * Handles a HAML comment.
+	 */
+	protected function handle_haml_comment() {
+		
+		return true;
+		
+	}
+	
+	/**
+	 * Handles any unhandled nodes, defaulting to a text node.
 	 */
 	protected function handle_any($match) {
 		
@@ -374,7 +446,7 @@ class Parser extends \haml\Parser {
 		}
 		
 		$node = $this->create_node('text');
-		$node->content = trim($this->line);
+		$node->content = new RubyInterpolatedString(trim($this->line));
 		$this->line = '';
 		$this->context->children[] = $node;
 		

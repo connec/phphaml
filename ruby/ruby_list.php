@@ -4,7 +4,7 @@
  * ruby_list.php
  */
 
-namespace hamlparser\ruby;
+namespace haml\ruby;
 
 use \haml\Exception;
 
@@ -162,14 +162,13 @@ abstract class RubyList {
 				$value = new RubyHash($value);
 				$value = $value->to_a();
 			break;
-			case '$':
-				$re = '/^\$[a-zA-Z_][a-zA-Z0-9_]*$/';
-				if(!preg_match($re, $value))
-					throw new Exception('Syntax error: invalid syntax for variable');
-				$value = '<?php echo ' . $value . '; ?>';
+			case '\'':
+			case '"':
+				$value = RubyValue::value_to_string($value);
 			break;
 			default:
-				$value = RubyValue::value_to_string($value);
+				$value = new RubyInterpolatedString('#{' . $value . '}');
+			break;
 		}
 		
 		return $value;
