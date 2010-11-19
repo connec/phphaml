@@ -13,6 +13,8 @@ use
 /**
  * The RubyInterpolatedString class handles parsing ruby's interpolated strings
  * into PHP echo statements for evaluation.
+ * 
+ * @todo Handle interpolated strings that are inside interpolated strings.
  */
 
 class RubyInterpolatedString {
@@ -20,12 +22,18 @@ class RubyInterpolatedString {
 	/**
 	 * A regular expression for matching the beginning of an interpolation.
 	 */
-	const RE_INTERPOLATION_START = '/(?:^|[^\\\\])(#){/';
+	const RE_INTERPOLATION_START = '/(?:^|[^\\\\]|[\\\\]{2})(#){/';
 	
 	/**
 	 * The input string being parsed.
 	 */
 	protected $input;
+	
+	/**
+	 * Contains the enclosing string character in the event that $input is a ruby
+	 * string.
+	 */
+	protected $string_delimeter;
 	
 	/**
 	 * The names of variables in this interpolation.
@@ -52,6 +60,12 @@ class RubyInterpolatedString {
 		}
 		
 		$this->parsed .= $this->input;
+		
+		$this->parsed = preg_replace(
+			array('/([^\\\\]|^)[\\\\]#/', '/[\\\\]{2}/'),
+			array('$1#', '\\'),
+			$this->parsed
+		);
 		
 	}
 	

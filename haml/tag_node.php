@@ -72,12 +72,21 @@ class TagNode extends Node {
 		$attributes = $this->attributes;
 		
 		if(isset($attributes['class'])) {
+			foreach($attributes['class'] as &$class) {
+				if($class instanceof \haml\ruby\RubyInterpolatedString)
+					$class = $class->to_text($this->document->variables);
+			}
 			sort($attributes['class']);
 			$attributes['class'] = implode(' ', $attributes['class']);
 		}
 		
-		if(isset($attributes['id']))
+		if(isset($attributes['id'])) {
+			foreach($attributes['id'] as &$id) {
+				if($id instanceof \haml\ruby\RubyInterpolatedString)
+					$id = $id->to_text($this->document->variables);
+			}
 			$attributes['id'] = implode('_', $attributes['id']);
+		}
 		
 		return $this->document->attributes($attributes);
 		

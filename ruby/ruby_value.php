@@ -55,7 +55,7 @@ class RubyValue {
 				);
 			}
 		}
-		return substr($string, 1, -1);
+		return new RubyInterpolatedString(substr($string, 1, -1));
 		
 	}
 	

@@ -37,6 +37,12 @@ class Document extends \haml\Document {
 	);
 	
 	/**
+	 * An associative array of variable names to values to be evaluated during
+	 * rendering.
+	 */
+	public $variables = array();
+	
+	/**
 	 * A boolean value indicating whether or not an XML prolog should be output at
 	 * the beginning of the document.
 	 */
@@ -69,7 +75,7 @@ class Document extends \haml\Document {
 	 */
 	public function render() {
 		
-		$this->output = array();
+		$output = array();
 		
 		if($this->xml_prolog and $this->options['format'] == 'xhtml') {
 			if(!$this->xml_encoding)
@@ -80,25 +86,25 @@ class Document extends \haml\Document {
 				'encoding' => $this->xml_encoding
 			));
 			
-			$this->output[] = '<?xml ' . $attributes . ' ?>';
+			$output[] = '<?xml ' . $attributes . ' ?>';
 		}
 		
 		if($this->doctype) {
 			$this->doctype = strtolower($this->doctype);
 			if(isset(static::$doctypes[$this->options['format']][$this->doctype]))
-				$this->output[] = static::$doctypes[$this->options['format']][$this->doctype];
+				$output[] = static::$doctypes[$this->options['format']][$this->doctype];
 		}
 		
 		foreach($this->children as $child)
-			$this->output[] = $child->render();
+			$output[] = $child->render();
 		
-		return implode("\n", $this->output);
+		return implode("\n", $output);
 		
 	}
 	
 	/**
 	 * Generates an XML attribute string given an array of attribute => value 
-	 * pairs.
+	 * pairs or raw attribute strings.
 	 */
 	public function attributes($attributes) {
 		
@@ -106,7 +112,14 @@ class Document extends \haml\Document {
 		foreach($attributes as $attribute => $value) {
 			if(empty($value))
 				continue;
-			$_attributes[] = $attribute . '=' . static::wrap($value, $this->options['attr_wrapper']);
+			
+			if($value instanceof \haml\ruby\RubyInterpolatedString)
+				$value = $value->to_text($this->variables);
+			
+			if(is_int($attribute))
+				$_attributes[] = $value;
+			else
+				$_attributes[] = $attribute . '=' . static::wrap($value, $this->options['attr_wrapper']);
 		}
 		return implode(' ', $_attributes);
 		

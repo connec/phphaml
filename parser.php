@@ -235,6 +235,9 @@ abstract class Parser {
 				$this->document->indent_string = $match[0];
 			}
 			
+			if(str_replace($this->indent_string, '', $match[0]))
+				$this->exception('Parse error: mixed indentation');
+			
 			$this->line = substr($this->line, strlen($match[0]));
 		} else {
 			$indent_level = 0;
@@ -259,6 +262,8 @@ abstract class Parser {
 				$this->exception('Parse error: unexpected indentation increase');
 			if($indent_level - $this->indent_level > 1)
 				$this->exception('Parse error: indent increased by more than 1');
+			if(empty($this->context->children))
+				$this->exception('Parse error: indent increased without parent node');
 			
 			$this->context = end($this->context->children);
 		}

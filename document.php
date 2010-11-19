@@ -37,11 +37,6 @@ abstract class Document {
 	public $indent_string;
 	
 	/**
-	 * The output generated during rendering.
-	 */
-	protected $output = '';
-	
-	/**
 	 * Constructs the Document, given a parser and options.
 	 */
 	public function __construct($parser, $options) {

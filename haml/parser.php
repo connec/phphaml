@@ -6,11 +6,25 @@
 
 namespace haml\haml;
 
+use \haml\ruby\RubyInterpolatedString;
+
 /**
  * The Parser class is the parser implementation for HAML.
  */
 
 class Parser extends \haml\Parser {
+	
+	/**
+	 * A flag indicating the next line is expected to continue multiline HTML
+	 * attributes.
+	 */
+	const MULTILINE_HTML_ATTRIBUTES = 32;
+	
+	/**
+	 * A flag indicating the next line is expected to continue multiline hash
+	 * attributes.
+	 */
+	const MULTILINE_HASH_ATTRIBUTES = 64;
 	
 	/**
 	 * A regular expression for matching an XML prolog.
@@ -48,6 +62,16 @@ class Parser extends \haml\Parser {
 	const RE_ID = '/^#[a-z][a-z0-9_:-]*/i';
 	
 	/**
+	 * A regular expression for matching a valid HTML attribute.
+	 */
+	const RE_ATTRIBUTE_NAME = '/^[a-z:_][a-z0-9:._-]*$/i';
+	
+	/**
+	 * A regular expression for matching the beginning of an interpolation.
+	 */
+	const RE_INTERPOLATION_START = RubyInterpolatedString::RE_INTERPOLATION_START;
+	
+	/**
 	 * An array mapping regular expressions to callbacks for handling different
 	 * source lines.
 	 * 
@@ -56,8 +80,8 @@ class Parser extends \haml\Parser {
 	protected static $handlers = array(
 		self::RE_XML       => 'xml_prolog',
 		self::RE_DOCTYPE   => 'doctype',
-		self::RE_TAG_START => 'tag',
-		self::RE_ANY       => 'text'
+		self::RE_TAG_START => 'tag_start',
+		self::RE_ANY       => 'any'
 	);
 	
 	/**
@@ -90,9 +114,14 @@ class Parser extends \haml\Parser {
 	);
 	
 	/**
-	 * An unfinished multiline node waiting to be added to the tree.
+	 * An unfinished node being processed.
 	 */
-	protected $multiline;
+	protected $node;
+	
+	/**
+	 * A flag indicating what multiline content is expected.
+	 */
+	protected $multiline = false;
 	
 	/**
 	 * Constructs the parser, given a source and options.
@@ -101,6 +130,18 @@ class Parser extends \haml\Parser {
 		
 		parent::__construct($source, $options);
 		$this->variables = $variables;
+		
+	}
+	
+	/**
+	 * Returns the result of rendering the Document.
+	 */
+	public function render() {
+		
+		if(!$this->document)
+			$this->parse();
+		$this->document->variables = $this->variables;
+		return $this->document->render();
 		
 	}
 	
@@ -138,11 +179,11 @@ class Parser extends \haml\Parser {
 	}
 	
 	/**
-	 * Handles a tag line.
+	 * Handles the start of a tag line (before any attributes).
 	 */
-	protected function handle_tag($match) {
+	protected function handle_tag_start($match) {
 		
-		$node = $this->create_node('tag');
+		$this->context->children[] = $this->node = $node = $this->create_node('tag');
 		
 		if($match[0][0] == '%') {
 			preg_match(self::RE_TAG, $this->line, $match);
@@ -155,7 +196,6 @@ class Parser extends \haml\Parser {
 		
 		while(preg_match(self::RE_CLASS, $this->line, $match)
 			 or preg_match(self::RE_ID,    $this->line, $match)) {
-		 	
 			$this->line = substr($this->line, strlen($match[0]));
 			
 			$name = substr($match[0], 1);
@@ -166,8 +206,137 @@ class Parser extends \haml\Parser {
 			} else {
 				$node->attributes['id'] = array($name);
 			}
-			
 		}
+		
+		$this->handle_attributes();
+		
+	}
+	
+	/**
+	 * Handles tag attributes, including dealing with multiline tags.
+	 */
+	protected function handle_attributes() {
+		
+		if($this->line[0] == '(' or $this->multiline == self::MULTILINE_HTML_ATTRIBUTES) {
+			if(!$this->handle_html_attributes()) {
+				if($this->multiline)
+					$this->expect_indent = self::EXPECT_SAME;
+				else {
+					$this->multiline = self::MULTILINE_HTML_ATTRIBUTES;
+					$this->expect_indent = self::EXPECT_MORE;
+				}
+				return;
+			}
+		}
+		
+		if($this->line[0] == '{' or $this->multiline == self::MULTILINE_HASH_ATTRIBUTES) {
+			if(!$this->handle_hash_attributes()) {
+				if($this->multiline)
+					$this->expect_indent = self::EXPECT_SAME;
+				else {
+					$this->multiline = self::MULTILINE_HASH_ATTRIBUTES;
+					$this->expect_indent = self::EXPECT_MORE;
+				}
+				return;
+			}
+		}
+		
+		$this->handle_tag_end();
+		
+	}
+	
+	/**
+	 * Handles HTML-style attributes.
+	 */
+	protected function handle_html_attributes() {
+		
+		$escape = false;
+		$in_apos = false;
+		$in_quot = false;
+		$finished = false;
+		$last_offset = ($this->line[0] == '(' ? 1 : 0);
+		
+		$attribute = '';
+		$value = '';
+		
+		preg_match_all('/[\b\'")=\s]|$/', $this->line, $matches, PREG_OFFSET_CAPTURE);
+		foreach($matches[0] as $match) {
+			switch($match[0]) {
+				case '\'':
+					if(!$in_quot and !$escape)
+						$in_apos = !$in_apos;
+				continue 2;
+				case '"':
+					if(!$in_apos and !$escape)
+						$in_quot = !$in_quot;
+				continue 2;
+				case '\\':
+					if(!$escape)
+						$escape = true;
+				continue 2;
+			}
+			
+			if($match[0] == '=') {
+				$attribute = substr($this->line, $last_offset, $match[1] - $last_offset);
+				if(!preg_match(self::RE_ATTRIBUTE_NAME, $attribute))
+					$this->exception('Syntax error: invalid attribute name');
+			}
+			
+			if(preg_match('/[\s)]|^$/', $match[0])) {
+				$value = trim(substr($this->line, $last_offset, $match[1] - $last_offset));
+				
+				if($value[0] == "'" or $value[0] == '"')
+					$value = new RubyInterpolatedString(trim($value, '\'"'));
+				elseif($value[0] == '$')
+					$value = new RubyInterpolatedString('#{' . $value . '}');
+				else
+					$this->exception('Syntax error: invalid attribute value');
+				
+				if($match[0] == ')')
+					$finished = true;
+			}
+			
+			if($attribute and $value) {
+				if($attribute == 'class')
+					$this->node->attributes['class'][] = $value;
+				elseif($attribute == 'id')
+					$this->node->attributes['id'][] = $value;
+				else
+					$this->node->attributes[$attribute] = $value;
+				$attribute = '';
+				$value = '';
+			}
+			
+			$last_offset = $match[1] + 1;
+			
+			if($finished)
+				break;
+		}
+		
+		$this->line = substr($this->line, $last_offset);
+		
+		if($finished)
+			return true;
+		else
+			return false;
+		
+	}
+	
+	/**
+	 * Handles ruby-style hash attributes.
+	 */
+	protected function handle_hash_attributes() {
+		
+		return true;
+		
+	}
+	
+	/**
+	 * Handles the end of a tag line (after any attributes).
+	 */
+	protected function handle_tag_end() {
+		
+		$node = $this->node;
 		
 		if($this->line[0] == '/') {
 			if($this->line != '/')
@@ -187,14 +356,22 @@ class Parser extends \haml\Parser {
 			$this->expect_indent = self::EXPECT_LESS | self::EXPECT_SAME;
 		}
 		
-		$this->context->children[] = $node;
+		$this->multiline = false;
+		$this->node = null;
 		
 	}
 	
 	/**
 	 * Handles a text node.
 	 */
-	protected function handle_text($match) {
+	protected function handle_any($match) {
+		
+		switch($this->multiline) {
+			case self::MULTILINE_HTML_ATTRIBUTES:
+			case self::MULTILINE_HASH_ATTRIBUTES:
+				return $this->handle_attributes();
+			break;
+		}
 		
 		$node = $this->create_node('text');
 		$node->content = trim($this->line);

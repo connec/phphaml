@@ -6,6 +6,8 @@
 
 namespace haml\haml;
 
+use \haml\ruby\RubyInterpolatedString;
+
 /**
  * The TextNode class represents a text node in a HAML document.
  */
@@ -22,7 +24,9 @@ class TextNode extends \haml\Node {
 	 */
 	public function render() {
 		
-		return str_repeat($this->document->indent_string, $this->indent_level) . $this->content;
+		$content = new RubyInterpolatedString($this->content);
+		return str_repeat($this->document->indent_string, $this->indent_level)
+			. $content->to_text($this->document->variables);
 		
 	}
 	
