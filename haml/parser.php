@@ -371,10 +371,17 @@ class Parser extends \haml\Parser {
 			
 			foreach(array('class', 'id') as $field) {
 				if(isset($hash[$field])) {
-					if(isset($this->node->attributes[$field]))
-						$this->node->attributes[$field][] = $hash[$field];
-					else
-						$this->node->attributes[$field] = array($hash[$field]);
+					if(!is_array($hash[$field])) {
+						if(isset($this->node->attributes[$field]))
+							$this->node->attributes[$field][] = $hash[$field];
+						else
+							$this->node->attributes[$field] = array($hash[$field]);
+					} else {
+						if(isset($this->node->attributes[$field]))
+							$this->node->attributes[$field] = array_merge($this->node->attributes[$field], $hash[$field]);
+						else
+							$this->node->attributes[$field] = $hash[$field];
+					}
 					unset($hash[$field]);
 				}
 			}

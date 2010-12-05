@@ -365,10 +365,22 @@
       "html" : "<p class='class1'></p>",
       "optional" : true
     },
+    
+    "Ruby-style multiple classes as an attribute" : {
+      "haml" : "%p{:class => ['class2', 'class1']}",
+      "html" : "<p class='class1 class2'></p>",
+      "optional" : true
+    },
 
     "Ruby-style tag with a CSS class and 'class' as an attribute" : {
       "haml" : "%p.class2{:class => 'class1'}",
       "html" : "<p class='class1 class2'></p>",
+      "optional" : true
+    },
+    
+    "Ruby-style tag with a CSS class and mutiple classes as an attribute" : {
+      "haml" : "%p.class2{:class => ['class3', 'class1']}",
+      "html" : "<p class='class1 class2 class3'></p>",
       "optional" : true
     },
 
