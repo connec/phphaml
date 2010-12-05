@@ -78,7 +78,7 @@ class TagNode extends Node {
 				if($class instanceof RubyInterpolatedString)
 					$class = $class->to_text($this->document->variables);
 			}
-			sort($attributes['class']);
+			natcasesort($attributes['class']);
 			$attributes['class'] = implode(' ', $attributes['class']);
 		}
 		
