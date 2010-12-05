@@ -309,8 +309,10 @@ class Parser extends \phphaml\parser\Parser {
 			if(preg_match('/[\s)]|^$/', $match[0])) {
 				$value = trim(substr($this->line, $last_offset, $match[1] - $last_offset));
 				
-				if($value[0] == "'" or $value[0] == '"')
-					$value = new RubyInterpolatedString(trim($value, '\'"'));
+				if($value[0] == '"')
+					$value = new RubyInterpolatedString(substr($value, 1, -1));
+				elseif($value[0] == "'")
+				    $value = substr($value, 1, -1);
 				else
 					$value = new RubyInterpolatedString('#{' . $value . '}');
 				
