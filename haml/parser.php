@@ -430,7 +430,7 @@ class Parser extends \haml\Parser {
 	 */
 	protected function handle_haml_comment() {
 		
-		$this->document->children[] = $this->create_node('haml_comment');
+		$this->context->children[] = $this->create_node('haml_comment');
 		
 	}
 	
