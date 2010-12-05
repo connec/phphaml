@@ -1,4 +1,8 @@
-<html>
+<?php
+
+namespace phphaml\test;
+
+?><html>
 	<head>
 		<style type="text/css">
 			.heading {

@@ -4,9 +4,9 @@
  * string.php
  */
 
-namespace haml\ruby;
+namespace phphaml\ruby;
 
-use haml\Exception;
+use \phphaml\Exception;
 
 /**
  * The RubyValue class contains functions for checking if a given string is a 

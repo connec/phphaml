@@ -4,11 +4,11 @@
  * ruby_interpolated_string.php
  */
 
-namespace haml\ruby;
+namespace phphaml\ruby;
 
 use
-	\haml\Exception,
-	\haml\StringStream;
+	\phphaml\Exception,
+	\phphaml\StringStream;
 
 /**
  * The RubyInterpolatedString class handles parsing ruby's interpolated strings

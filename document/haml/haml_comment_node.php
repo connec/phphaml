@@ -4,7 +4,7 @@
  * haml_comment_node.php
  */
 
-namespace haml\haml;
+namespace phphaml\document\haml;
 
 /**
  * The HamlCommentNode class represents a HAML comment in a HAML document.

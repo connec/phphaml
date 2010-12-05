@@ -1,11 +1,16 @@
 <?php
 
-use \haml\haml\Parser;
+namespace phphaml\test;
+
+use
+    \Exception,
+    \StdClass,
+    \phphaml\parser\haml\Parser;
 
 require '../library.php';
 require 'diff.php';
 
-\haml\Library::autoload();
+\phphaml\Library::autoload();
 
 $options = array(
 	'4' => array(

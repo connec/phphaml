@@ -1,5 +1,7 @@
 <?php
 
+namespace phphaml\test;
+
 /**
  * Marks up a diff between $str1 and $str2, with $str1 considered the 'right'
  * version.

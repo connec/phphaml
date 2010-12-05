@@ -4,9 +4,9 @@
  * ruby_list.php
  */
 
-namespace haml\ruby;
+namespace phphaml\ruby;
 
-use \haml\Exception;
+use \phphaml\Exception;
 
 /**
  * The RubyList class provides the base for RubyHash and RubyArray classes

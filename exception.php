@@ -4,7 +4,7 @@
  * haml_exception.php
  */
 
-namespace haml;
+namespace phphaml;
 
 /**
  * The base exception class for the haml library.

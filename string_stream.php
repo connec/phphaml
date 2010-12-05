@@ -4,7 +4,7 @@
  * string_stream.php
  */
 
-namespace haml;
+namespace phphaml;
 
 /**
  * The StringStream class allows strings to be treated as files for the purposes
@@ -21,7 +21,7 @@ class StringStream {
 	protected static $strings = array();
 	
 	/**
-	 * The steing this instance is dealing with.
+	 * The string this instance is dealing with.
 	 */
 	protected $string;
 	
@@ -164,6 +164,6 @@ class StringStream {
 	
 }
 
-stream_wrapper_register('string', '\haml\StringStream');
+stream_wrapper_register('string', '\\' . __NAMESPACE__ . '\StringStream');
 
 ?>

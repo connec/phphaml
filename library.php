@@ -4,7 +4,7 @@
  * lib.php
  */
 
-namespace haml;
+namespace phphaml;
 
 /**
  * The haml\Haml class is the include point for the library.
