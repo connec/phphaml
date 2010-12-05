@@ -38,12 +38,12 @@ $tpl_container = <<< 'END'
 END;
 
 $tpl_test = <<< 'END'
-<div class="left"><pre>
-%1$s
-</pre></div>
-<div class="right"><pre>
-%2$s
-</pre></div>
+<div class="left">
+<pre>%1$s</pre>
+</div>
+<div class="right">
+<pre>%2$s</pre>
+</div>
 <div style="clear: both"></div>
 END;
 

@@ -5,6 +5,15 @@ namespace phphaml\test;
 ?><html>
 	<head>
 		<style type="text/css">
+		    body {
+		        font-family: 'Lucida Sans Unicode';
+		        font-size: 10pt;
+		    }
+		    
+		    pre {
+		        margin: 0;
+		    }
+		    
 			.heading {
 				background-color: #999;
 				text-align: center;
@@ -25,9 +34,10 @@ namespace phphaml\test;
 			
 			h4 {
 				margin: 0;
-				margin-top: 0.5em;
-				padding: 0.5em;
+				margin-top: 5px;
+				padding: 5px;
 				cursor: pointer;
+				font-weight: normal;
 			}
 			
 			h4:first-child {
@@ -36,11 +46,11 @@ namespace phphaml\test;
 			
 			pre.error {
 				margin: 0;
-				padding: 1em;
+				padding: 5px;
 			}
 			
 			.container, pre.error {
-				padding-bottom: 1em;
+				padding-bottom: 5px;
 				font-size: 0.9em;
 			}
 			
@@ -55,8 +65,8 @@ namespace phphaml\test;
 			.left, .right {
 				float: left;
 				width: 40%;
-				margin: 0 1em;
-				padding: 1em;
+				margin: 0 5px;
+				padding: 5px;
 				background-color: #eee;
 				border: 1px solid #666;
 			}
