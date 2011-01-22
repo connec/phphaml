@@ -1,0 +1,45 @@
+Problem:
+	Design an implementable, highly extensible, flexible and extremely elegant parser for parsing 
+	HAML / SASS documents, and ideally other indent-contexted, fairly context insensitive languages.
+
+	How about:
+		A parser autoloads its components, then checks each component's 'trigger' regular expression
+		against the current line, and upon a match delegates the parsing of that line to the component.
+		
+		Problem:
+			Elegantly dealing with priority... more specific triggers (e.g. tags) must come before less
+			specific ones (e.g. text).
+			
+			How about:
+				Somehow deciding on the specificity of the trigger expression, and sorting accordingly.
+				
+				Problem:
+					No idea how to do it, if it's possible.  Likely process-intensive, although it would
+					only need done once per 'load' (static property).
+					
+					How about:
+						Instead of trigger regular expressions, use a more restricted expression, such as
+						only checking the first character of the line or, in general, a substring at the
+						beginning of the line.
+						
+						Problem:
+							Inflexible, potentially inextensible.  Is this expressive enough for HAML / 
+							SASS? If so, is it an acceptable limitation on future extension?
+							
+							How about:
+								Beginning-of-line substring is expressive enough for HAML / SASS, and is an
+								acceptable limitation.
+			
+			How about:
+				Each component has a priority.
+				
+				Problem:
+					Inflexible and inextensible, gaps would have to be left in priorities to allow 
+					'insertion' of new components.
+			
+			How about:
+				Manually specifying the order in the parser.
+				
+				Problem:
+					Inflexible and inextensible, new components would have to be hard-coded into the parser,
+					component name changes would have to be changed in the parser, etc.

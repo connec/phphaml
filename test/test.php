@@ -5,7 +5,7 @@ namespace phphaml\test;
 use
     \Exception,
     \StdClass,
-    \phphaml\parser\haml\Parser;
+    \phphaml\haml\Parser;
 
 require '../library.php';
 require 'diff.php';

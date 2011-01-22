@@ -34,14 +34,18 @@ class RubyHash extends RubyList {
 		
 		// Split the entry into key/value.
 		$entry = array_map('trim', explode('=>', $entry, 2));
-		if(count($entry) < 2) {
-			throw new Exception(
-				'Invalid syntax: expected "=>" in hash entry'
-			);
-		}
+		if(count($entry) < 2)
+			throw new Exception('Invalid syntax: expected "=>" in hash entry');
 		list($key, $value) = $entry;
 		
-		$this->parsed[RubyValue::value_to_string($key)] = $this->handle_value($value);
+		$key = RubyValue::value_to_string($key);
+		if($key instanceof RubyInterpolatedString) {
+			$this->parsed[] = array(
+				'key' => RubyValue::value_to_string($key),
+				'value' => $this->handle_value($value)
+			);
+		} else
+			$this->parsed[$key] = $this->handle_value($value);
 		
 	}
 	

@@ -12,6 +12,11 @@ namespace phphaml;
 
 class Library {
 	
+	/**
+	 * A cache of class info.
+	 */
+	protected static $class_info = array();
+	
 	protected static $dir;
 	
 	/**
@@ -26,14 +31,11 @@ class Library {
 		
 	}
 	
-	public static function autoload($class = null) {
+	public static function get_class_info($class) {
 		
-		static::init();
+		if(isset(static::$class_info[$class]))
+			return static::$class_info[$class];
 		
-		if(!$class)
-			return spl_autoload_register(array(get_class(), 'autoload'));
-		
-		// Extract the namespace tree.
 		if($class[0] == '\\')
 			$class = substr($class, 1);
 		$parts = explode('\\', $class);
@@ -43,6 +45,19 @@ class Library {
 		array_shift($parts);
 		$dir = static::$dir . implode(DIRECTORY_SEPARATOR, $parts) . DIRECTORY_SEPARATOR;
 		$file = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $class)) . '.php';
+		
+		return (static::$class_info[$class] = array($namespace, $class, $dir, $file));
+		
+	}
+	
+	public static function autoload($class = null) {
+		
+		static::init();
+		
+		if(!$class)
+			return spl_autoload_register(array(get_class(), 'autoload'));
+		
+		list($namespace, $class, $dir, $file) = static::get_class_info($class);
 		
 		if(!file_exists($dir . $file))
 			return false;
