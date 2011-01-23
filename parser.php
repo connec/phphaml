@@ -58,6 +58,11 @@ abstract class Parser extends Node {
 	protected $options = array();
 	
 	/**
+	 * An array of variable => value pairs to substitute into the render.
+	 */
+	protected $variables = array();
+	
+	/**
 	 * The source this parser is parsing.
 	 */
 	protected $source;
@@ -94,6 +99,15 @@ abstract class Parser extends Node {
 			throw new Exception('Sanity error: unknown option - ' . $key);
 		
 		return $this->options[$key];
+		
+	}
+	
+	/**
+	 * Accessor for {$variables}.
+	 */
+	public function variables() {
+		
+		return $this->variables;
 		
 	}
 	

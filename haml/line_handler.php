@@ -22,18 +22,6 @@ abstract class LineHandler extends \phphaml\LineHandler {
 		
 	}
 	
-	/**
-	 * Extracts a balanced substring from the line.
-	 */
-	protected function extract_balanced($open, $close) {
-		
-		if($this->content[0] != $open)
-			$this->exception('Sanity error: content does not begin with $open');
-		
-		
-		
-	}
-	
 }
 
 ?>

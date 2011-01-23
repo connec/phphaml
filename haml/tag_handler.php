@@ -6,7 +6,9 @@
 
 namespace phphaml\haml;
 
-use \phphaml\ruby\RubyInterpolatedString;
+use
+	\phphaml\ruby\RubyInterpolatedString,
+	\phphaml\ruby\RubyValue;
 
 /**
  * The TagHandler class handles tag nodes in a HAML source.
@@ -85,6 +87,31 @@ class TagHandler extends LineHandler {
 			}
 		}
 		
+		if($this->content[0] == '(') {
+			$html_attributes = $this->extract_balanced('(', ')');
+			
+			foreach($this->quote_safe_explode(' ', $html_attributes) as $entry) {
+				$parts = $this->quote_safe_explode('=', $entry);
+				
+				if(count($parts) != 2)
+					$this->exception('Parse error: bad html attribute syntax');
+				
+				if($parts[1][0] == '"' or $parts[1][0] == '\'') {
+					if($parts[1][strlen($parts[1]) - 1] != $parts[1][0])
+						$this->exception('Parse error: unterminated string');
+					
+					$parts[1] = RubyValue::string_to_string($parts[1]);
+				}
+				
+				if($parts[0] == 'class' or $parts[0] == 'id')
+					$this->attributes[$parts[0]][] = $parts[1];
+				else
+					$this->attributes[$parts[0]] = $parts[1];
+			}
+			
+			$this->content = substr($this->content, strlen($html_attributes) + 2);
+		}
+		
 		if($this->content[0] == '/') {
 			if($this->content != '/')
 				$this->exception('Parse error: self-closing tags cannot have content');
@@ -129,6 +156,96 @@ class TagHandler extends LineHandler {
 	}
 	
 	/**
+	 * Extracts a balanced substring from the line.
+	 */
+	protected function extract_balanced($open, $close) {
+		
+		if($this->content[0] != $open)
+			$this->exception('Sanity error: content does not begin with $open');
+		
+		$quote = false;
+		$escape = false;
+		$depth = 0;
+		
+		for($i = 0; $i < strlen($this->content); $i ++) {
+			$c = $this->content[$i];
+			
+			if($escape) {
+				$escape = false;
+				continue;
+			}
+			
+			switch($c) {
+				case '\\':
+					$escape = true;
+				break;
+				
+				case '"':
+				case '\'':
+					if(!$quote)
+						$quote = $c;
+					elseif($quote == $c)
+						$quote = false;
+				break;
+				
+				case $open:
+					if(!$quote)
+						$depth ++;
+				break;
+				
+				case $close:
+					if(!$quote)
+						$depth --;
+				break;
+			}
+			
+			if($depth == 0)
+				return substr($this->content, 1, $i - 1);
+		}
+		
+		if($depth != 0) {
+			$this->exception(
+				'Parse error: missing closing delimeter ":delimeter"',
+				array('delimeter' => $close)
+			);
+		}
+		
+	}
+	
+	/**
+	 * Explodes a string by another string, given that the string isn't in a quote.
+	 */
+	protected function quote_safe_explode($delimeter, $string) {
+		
+		$result = array();
+		
+		$quote = false;
+		$escape = false;
+		
+		for($i = 0; $i < strlen($string); $i ++) {
+			if($string[$i] == '"' or $string[$i] == '\'') {
+				if($escape)
+					$escape == false;
+				elseif(!$quote)
+					$quote = $string[$i];
+				elseif($quote == $string[$i])
+					$quote = false;
+				
+				continue;
+			}
+			
+			if(!$quote and strpos($string, $delimeter, $i) === $i) {
+				$result[] = substr($string, 0, $i);
+				$string = substr($string, $i + strlen($delimeter));
+			}
+		}
+		
+		$result[] = $string;
+		return $result;
+		
+	}
+	
+	/**
 	 * Renders the attribute string for this tag.
 	 */
 	protected function render_attributes() {
@@ -143,11 +260,14 @@ class TagHandler extends LineHandler {
 					if($_value instanceof RubyInterpolatedString)
 						$_value = $_value->to_text($this->parser->variables());
 				}
-				if($attribute == 'class')
+				if($attribute == 'class') {
+					sort($value);
 					$value = implode(' ', $value);
+				}
 				if($attribute == 'id')
 					$value = implode('_', $value);
-			}
+				} elseif($value instanceof RubyInterpolatedString)
+					$value = $value->to_text($this->parser->variables());
 			
 			$attributes[] = $attribute . '=' . $this->attr($value);
 		}
