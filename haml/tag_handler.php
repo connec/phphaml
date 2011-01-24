@@ -7,8 +7,8 @@
 namespace phphaml\haml;
 
 use
-	\phphaml\ruby\RubyInterpolatedString,
-	\phphaml\ruby\RubyValue;
+	\phphaml\haml\ruby\RubyHash,
+	\phphaml\haml\ruby\RubyValue;
 
 /**
  * The TagHandler class handles tag nodes in a HAML source.
@@ -20,6 +20,11 @@ class TagHandler extends LineHandler {
 	 * A flag indicating we are processing multiline HTML attributes.
 	 */
 	const MULTILINE_HTML_ATTRIBUTES = 1;
+	
+	/**
+	 * A flag indicating we are processing multiline ruby attributes.
+	 */
+	const MULTILINE_RUBY_ATTRIBUTES = 2;
 	
 	/**
 	 * A regular expression for capturing a valid tag name.
@@ -88,6 +93,10 @@ class TagHandler extends LineHandler {
 					static::$multiline = false;
 					$parser->context()->parse_html_attributes();
 				break;
+				case self::MULTILINE_RUBY_ATTRIBUTES:
+					static::$multiline = false;
+					$parser->context()->parse_ruby_attributes();
+				break;
 				default:
 					$parser->context()->exception('Sanity error: unknown multiline modifier');
 			}
@@ -118,23 +127,25 @@ class TagHandler extends LineHandler {
 		}
 		
 		while($this->content[0] == '.' or $this->content[0] == '#') {
-			if($this->content[0] == '.') {
-				if(!preg_match(self::RE_CLASS, substr($this->content, 1), $match))
-					$this->exception('Parse error: invalid class name');
-				
-				if(!isset($this->attributes['class']))
-					$this->attributes['class'] = array();
-				
-				$this->content = substr($this->content, strlen($match[0]) + 1);
-				$this->attributes['class'][] = $match[0];
-			} else {
-				if(!preg_match(self::RE_ID, substr($this->content, 1), $match))
-					$this->exception('Parse error: invalid id');
-				
-				$this->content = substr($this->content, strlen($match[0]) + 1);
-				$this->attributes['id'] = array($match[0]);
+			$type = $this->content[0] == '.' ? 'class' : 'id';
+			
+			if(!preg_match($type == 'id' ? self::RE_ID : self::RE_CLASS, substr($this->content, 1), $match)) {
+				$this->exception(
+					'Parse error: invalid :type',
+					array('type' => $type == 'id' ? 'id' : 'class name')
+				);
 			}
+			
+			$this->content = substr($this->content, strlen($match[0]) + 1);
+			
+			if($type == 'class')
+				$this->attributes[] = array($type, $match[0]);
+			else
+				$id = $match[0];
 		}
+		
+		if(isset($id))
+			$this->attributes[] = array('id', $id);
 		
 		$this->parse_html_attributes();
 		
@@ -159,20 +170,35 @@ class TagHandler extends LineHandler {
 				if(count($parts) != 2)
 					$this->exception('Parse error: bad html attribute syntax');
 				
-				if($parts[1][0] == '"' or $parts[1][0] == '\'') {
-					if($parts[1][strlen($parts[1]) - 1] != $parts[1][0])
-						$this->exception('Parse error: unterminated string');
-					
-					$parts[1] = RubyValue::string_to_string($parts[1]);
-				}
-				
-				if($parts[0] == 'class' or $parts[0] == 'id')
-					$this->attributes[$parts[0]][] = $parts[1];
-				else
-					$this->attributes[$parts[0]] = $parts[1];
+				$this->attributes[] = array($parts[0], new Value($parts[1], $this));
 			}
 			
 			$this->content = substr($this->content, strlen($html_attributes) + 2);
+		}
+		
+		$this->parse_ruby_attributes();
+		
+	}
+	
+	/**
+	 * Parses Ruby style attributes from the content.
+	 */
+	protected function parse_ruby_attributes() {
+		
+		if($this->content[0] == '{') {
+			$ruby_attributes = $this->extract_balanced('{', '}');
+			
+			if($ruby_attributes === false) {
+				if($this->content[strlen($this->content) - 1] != ',')
+					$this->exception('Parse error: lines in a multiline hash attributes must end with a comma (,)');
+				
+				static::$multiline = self::MULTILINE_RUBY_ATTRIBUTES;
+				return;
+			}
+			
+			$this->content = substr($this->content, strlen($ruby_attributes) + 2);
+			$ruby_attributes = new RubyHash('{' . $ruby_attributes . '}', $this);
+			$this->attributes = array_merge($this->attributes, $ruby_attributes->to_a());
 		}
 		
 		$this->parse_end();
@@ -319,27 +345,43 @@ class TagHandler extends LineHandler {
 	 */
 	protected function render_attributes() {
 		
+		Value::variables($this->parser->variables());
+		
 		$attributes = array();
-		foreach($this->attributes as $attribute => $value) {
+		$class = array();
+		$id = array();
+		
+		foreach($this->attributes as $attribute) {
+			list($key, $value) = $attribute;
+			$key = (string)$key;
+			
 			if(empty($value))
-				return;
+				continue;
 			
-			if(is_array($value)) {
-				foreach($value as &$_value) {
-					if($_value instanceof RubyInterpolatedString)
-						$_value = $_value->to_text($this->parser->variables());
-				}
-				if($attribute == 'class') {
-					sort($value);
-					$value = implode(' ', $value);
-				}
-				if($attribute == 'id')
-					$value = implode('_', $value);
-				} elseif($value instanceof RubyInterpolatedString)
-					$value = $value->to_text($this->parser->variables());
-			
-			$attributes[] = $attribute . '=' . $this->attr($value);
+			if($key == 'class') {
+				if(is_array($value)) {
+					foreach($value as $_value)
+						$class[] = (string)$_value;
+				} else
+					$class[] = (string)$value;
+			} elseif($key == 'id') {
+				if(is_array($value)) {
+					foreach($value as $_value)
+						$id[] = (string)$_value;
+				} else
+					$id[] = (string)$value;
+			} else
+				$attributes[] = $key . '=' . $this->attr((string)$value);
 		}
+		
+		if(!empty($class)) {
+			sort($class);
+			$attributes[] = 'class=' . $this->attr(implode(' ', $class));
+		}
+		
+		if(!empty($id))
+			$attributes[] = 'id=' . $this->attr(implode('_', $id));
+		
 		sort($attributes);
 		return implode(' ', $attributes);
 		

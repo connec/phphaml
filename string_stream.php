@@ -60,9 +60,12 @@ class StringStream {
 	/**
 	 * Clears a string (unset).
 	 */
-	public static function clear($key) {
+	public static function clear($key = null) {
 		
-		unset(static::$strings[$key]);
+		if(!$key)
+			static::$strings = array();
+		else
+			unset(static::$strings[$key]);
 		
 	}
 	
