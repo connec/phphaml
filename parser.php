@@ -180,6 +180,9 @@ abstract class Parser extends Node {
 	 */
 	public function force_handler($handler) {
 		
+		if($handler[0] != '\\')
+			$handler = '\\' . $handler;
+		
 		if(!in_array($handler, static::$handlers))
 			$this->exception('Sanity error: cannot force unregistered handler');
 		
@@ -286,7 +289,7 @@ abstract class Parser extends Node {
 				if($this->force_handler) {
 					$handled = true;
 					$handler = $this->force_handler;
-					$hander::handle($this);
+					$handler::handle($this);
 				} else {
 					foreach(static::$handlers as $trigger => $handler) {
 						if($trigger == '*')
