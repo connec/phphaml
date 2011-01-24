@@ -91,6 +91,43 @@ abstract class Parser extends Node {
 	protected $force_handler;
 	
 	/**
+	 * Finds handlers in this Parser's directory.
+	 */
+	protected static function find_handlers() {
+		
+		foreach(glob(static::$handler_directory . '*_handler.php') as $file) {
+			$file = substr(basename($file), 0, -4);
+			$handler = static::$namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
+			$trigger = $handler::trigger();
+			
+			if(!$trigger)
+				continue;
+			if(is_array($trigger)) {
+				foreach($trigger as $_trigger)
+					static::$handlers[$_trigger] = $handler;
+			} else
+				static::$handlers[$trigger] = $handler;
+		}
+		
+		uksort(static::$handlers, function($a, $b) {
+			if(strlen($a) == strlen($b)) return  0;
+			if(strlen($b) > strlen($a))  return -1;
+			if(strlen($a) > strlen($b))  return  1;
+		});
+		
+	}
+	
+	/**
+	 * Throws an exception, and appends the line number to the given message.
+	 */
+	protected function exception($message, array $sub = array()) {
+		
+		$sub['line'] = $this->line_number;
+		throw new Exception($message . ' - line :line', $sub);
+		
+	}
+	
+	/**
 	 * Accessor for {$options}.
 	 */
 	public function option($key) {
@@ -144,7 +181,7 @@ abstract class Parser extends Node {
 	public function force_handler($handler) {
 		
 		if(!in_array($handler, static::$handlers))
-			throw new Exception('Sanity error: cannot force unregistered handler');
+			$this->exception('Sanity error: cannot force unregistered handler');
 		
 		$this->force_handler = $handler;
 		
@@ -157,29 +194,12 @@ abstract class Parser extends Node {
 		
 		if(!static::$namespace)
 			list(static::$namespace) = Library::get_class_info(get_class($this));
+		
 		if(!static::$handler_directory)
 			list(,,static::$handler_directory) = Library::get_class_info(get_class($this));
-		if(empty(static::$handlers)) {
-			foreach(glob(static::$handler_directory . '*_handler.php') as $file) {
-				$file = substr(basename($file), 0, -4);
-				$handler = static::$namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
-				$trigger = $handler::trigger();
-				
-				if(!$trigger)
-					continue;
-				if(is_array($trigger)) {
-					foreach($trigger as $_trigger)
-						static::$handlers[$_trigger] = $handler;
-				} else
-					static::$handlers[$trigger] = $handler;
-			}
-			
-			uksort(static::$handlers, function($a, $b) {
-				if(strlen($a) == strlen($b)) return  0;
-				if(strlen($b) > strlen($a))  return -1;
-				if(strlen($a) > strlen($b))  return  1;
-			});
-		}
+		
+		if(empty(static::$handlers))
+			static::find_handlers();
 		
 		$this->options = array_merge($this->options, $options);
 		
@@ -218,17 +238,26 @@ abstract class Parser extends Node {
 	 */
 	public function get_line() {
 		
-		if(is_array($this->source)) {
-			$line = each($this->source);
-			if(!$line)
-				return false;
-			$line = $line[1];
-		} elseif(is_resource($this->source)) {
-			$line = rtrim(fgets($this->source), "\r\n");
-		} else
-			throw new Exception('Sanity error: unexpected source type - ' . typeof($this->source));
+		static $get_line;
 		
-		return $line;
+		if(!$get_line) {
+			if(is_array($this->source)) {
+				$get_line = function(&$source) {
+					$line = each($source);
+					if(!$line)
+						return false;
+					else
+						return $line[1];
+				};
+			} elseif(is_resource($this->source)) {
+				$get_line = function(&$source) {
+					return rtrim(fgets($source), "\r\n");
+				};
+			} else
+				throw new Exception('Sanity error: unexpected source type - ' . typeof($this->source));
+		}
+		
+		return $get_line($this->source);
 		
 	}
 	
@@ -245,15 +274,11 @@ abstract class Parser extends Node {
 		
 		$this->line_number = 0;
 		$this->indent_level = 0;
+		
 		while($this->content = $this->get_line()) {
 			$this->line_number ++;
 			
-			try {
-				$this->update_context();
-			} catch(Exception $e) {
-				$e->set('line', $this->line_number);
-				throw $e;
-			}
+			$this->update_context();
 			
 			if(trim($this->content)) {
 				$handled = false;
@@ -280,7 +305,7 @@ abstract class Parser extends Node {
 				}
 				
 				if(!$handled)
-					throw new Exception('Parse error: unexpected input - line ' . $this->line_number);
+					$this->exception('Parse error: unexpected input');
 			}
 		}
 		
@@ -303,7 +328,7 @@ abstract class Parser extends Node {
 			}
 
 			if(str_replace($this->indent_string, '', $match[0]))
-				throw new Exception('Parse error: mixed indentation - line :line');
+				$this->exception('Parse error: mixed indentation');
 
 			$this->content = substr($this->content, strlen($match[0]));
 		} else {
@@ -312,7 +337,7 @@ abstract class Parser extends Node {
 
 		if($indent_level < $this->indent_level) {
 			if(!($this->expect_indent & self::EXPECT_LESS))
-				throw new Exception('Parse error: unexpected indentation decrease - line :line');
+				$this->exception('Parse error: unexpected indentation decrease');
 
 			$difference = $this->indent_level - $indent_level;
 			while($difference--)
@@ -321,16 +346,16 @@ abstract class Parser extends Node {
 
 		if($indent_level == $this->indent_level) {
 			if(!($this->expect_indent & self::EXPECT_SAME))
-				throw new Exception('Parse error: expected indentation change - line :line');
+				$this->exception('Parse error: expected indentation change');
 		}
 
 		if($indent_level > $this->indent_level) {
 			if(!($this->expect_indent & self::EXPECT_MORE))
-				throw new Exception('Parse error: unexpected indentation increase - line :line');
+				$this->exception('Parse error: unexpected indentation increase');
 			if($indent_level - $this->indent_level > 1)
-				throw new Exception('Parse error: indent increased by more than 1 - line :line');
+				$this->exception('Parse error: indent increased by more than 1');
 			if(empty($this->context->children))
-				throw new Exception('Parse error: indent increased without parent node - line :line');
+				$this->exception('Parse error: indent increased without parent node');
 
 			$this->context = end($this->context->children);
 		}
