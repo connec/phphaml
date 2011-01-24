@@ -17,6 +17,11 @@ use
 class TagHandler extends LineHandler {
 	
 	/**
+	 * A flag indicating we are processing multiline HTML attributes.
+	 */
+	const MULTILINE_HTML_ATTRIBUTES = 1;
+	
+	/**
 	 * A regular expression for capturing a valid tag name.
 	 */
 	const RE_TAG = '/^[a-z_][a-z0-9_:-]*/i';
@@ -41,6 +46,11 @@ class TagHandler extends LineHandler {
 	protected static $trigger = array('%', '.', '#');
 	
 	/**
+	 * A flag indicating whether we are processing a multiline tag.
+	 */
+	protected static $multiline = false;
+	
+	/**
 	 * The tag name of this tag.
 	 */
 	protected $tag = 'div';
@@ -54,6 +64,36 @@ class TagHandler extends LineHandler {
 	 * A flag indicating whether or not this tag is self-closing.
 	 */
 	protected $self_closing = false;
+	
+	/**
+	 * Handles the current line in the given parser.
+	 * 
+	 * This is used instead of the parser appending to the tree itself in order to deal with
+	 * potential multiline statements.
+	 */
+	public static function handle(\phphaml\Parser $parser) {
+		
+		if(!static::$multiline) {
+			parent::handle($parser);
+			
+			if(static::$multiline) {
+				$parser->force_handler(get_called_class());
+				$parser->expect_indent(Parser::EXPECT_MORE);
+			}
+		} else {
+			$parser->context()->content .= ' ' . $parser->content();
+			
+			switch(static::$multiline) {
+				case self::MULTILINE_HTML_ATTRIBUTES:
+					static::$multiline = false;
+					$parser->context()->parse_html_attributes();
+				break;
+				default:
+					$parser->context()->exception('Sanity error: unknown multiline modifier');
+			}
+		}
+		
+	}
 	
 	/**
 	 * Parses the content of this node.
@@ -107,6 +147,11 @@ class TagHandler extends LineHandler {
 		
 		if($this->content[0] == '(') {
 			$html_attributes = $this->extract_balanced('(', ')');
+			
+			if($html_attributes === false) {
+				static::$multiline = self::MULTILINE_HTML_ATTRIBUTES;
+				return;
+			}
 			
 			foreach($this->quote_safe_explode(' ', $html_attributes) as $entry) {
 				$parts = $this->quote_safe_explode('=', $entry);
@@ -231,12 +276,8 @@ class TagHandler extends LineHandler {
 				return substr($this->content, 1, $i - 1);
 		}
 		
-		if($depth != 0) {
-			$this->exception(
-				'Parse error: missing closing delimeter ":delimeter"',
-				array('delimeter' => $close)
-			);
-		}
+		if($depth != 0)
+			return false;
 		
 	}
 	
