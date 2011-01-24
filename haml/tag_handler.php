@@ -60,6 +60,15 @@ class TagHandler extends LineHandler {
 	 */
 	public function parse() {
 		
+		$this->parse_start();
+		
+	}
+	
+	/**
+	 * Parses the beginning of a tag line (tag name, classes and ids).
+	 */
+	protected function parse_start() {
+		
 		if($this->content[0] == '%') {
 			if(!preg_match(self::RE_TAG, substr($this->content, 1), $match))
 				$this->exception('Parse error: invalid tag name');
@@ -87,6 +96,15 @@ class TagHandler extends LineHandler {
 			}
 		}
 		
+		$this->parse_html_attributes();
+		
+	}
+	
+	/**
+	 * Parses HTML attributes from the content.
+	 */
+	protected function parse_html_attributes() {
+		
 		if($this->content[0] == '(') {
 			$html_attributes = $this->extract_balanced('(', ')');
 			
@@ -112,9 +130,19 @@ class TagHandler extends LineHandler {
 			$this->content = substr($this->content, strlen($html_attributes) + 2);
 		}
 		
+		$this->parse_end();
+		
+	}
+	
+	/**
+	 * Parses the end of a tag line (self-closing, content) and sets up the parser for the next line.
+	 */
+	protected function parse_end() {
+		
 		if($this->content[0] == '/') {
 			if($this->content != '/')
 				$this->exception('Parse error: self-closing tags cannot have content');
+			
 			$this->content = substr($this->content, 1);
 			$this->self_closing = true;
 		} elseif($this->content == '' and in_array($this->tag, $this->parser->option('autoclose')))
