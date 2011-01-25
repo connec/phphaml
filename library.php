@@ -33,6 +33,8 @@ class Library {
 	
 	public static function get_class_info($class) {
 		
+		static::init();
+		
 		if(isset(static::$class_info[$class]))
 			return static::$class_info[$class];
 		
