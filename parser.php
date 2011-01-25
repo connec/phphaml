@@ -110,20 +110,10 @@ abstract class Parser extends Node {
 		}
 		
 		uksort(static::$handlers, function($a, $b) {
+			if(strlen($a)  < strlen($b)) return -1;
 			if(strlen($a) == strlen($b)) return  0;
-			if(strlen($b) > strlen($a))  return -1;
-			if(strlen($a) > strlen($b))  return  1;
+			if(strlen($a)  > strlen($b)) return  1;
 		});
-		
-	}
-	
-	/**
-	 * Throws an exception, and appends the line number to the given message.
-	 */
-	protected function exception($message, array $sub = array()) {
-		
-		$sub['line'] = $this->line_number;
-		throw new Exception($message . ' - line :line', $sub);
 		
 	}
 	

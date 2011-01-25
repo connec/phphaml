@@ -112,7 +112,7 @@ abstract class Node {
 	/**
 	 * Throws an exception, and appends the line number to the given message.
 	 */
-	protected function exception($message, array $sub = array()) {
+	public function exception($message, array $sub = array()) {
 		
 		$sub['line'] = $this->line_number;
 		throw new Exception($message . ' - line :line', $sub);
