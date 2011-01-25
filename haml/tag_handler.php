@@ -369,8 +369,16 @@ class TagHandler extends LineHandler {
 						$id[] = (string)$_value;
 				} else
 					$id[] = (string)$value;
-			} else
-				$attributes[] = $key . '=' . $this->attr((string)$value);
+			} else {
+				$value = (string)$value;
+				if($value == "1") {
+					if(substr($this->parser->option('format'), 0, 4) == 'html')
+						$attributes[] = $key;
+					else
+						$attributes[] = $key . '=' . $this->attr($key);
+				} else
+					$attributes[] = $key . '=' . $this->attr($value);
+			}
 		}
 		
 		if(!empty($class)) {
