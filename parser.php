@@ -34,11 +34,11 @@ abstract class Parser extends Node {
 	const EXPECT_ANY = 7;
 	
 	/**
-	 * The namespace this parser class is in.
+	 * The namespace the handlers are in.
 	 * 
 	 * Note: this can be left blank to reduce configuration.
 	 */
-	protected static $namespace;
+	protected static $handler_namespace;
 	
 	/**
 	 * The directory this parser's line handlers are in.
@@ -97,7 +97,7 @@ abstract class Parser extends Node {
 		
 		foreach(glob(static::$handler_directory . '*_handler.php') as $file) {
 			$file = substr(basename($file), 0, -4);
-			$handler = static::$namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
+			$handler = static::$handler_namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
 			$trigger = $handler::trigger();
 			
 			if(!$trigger)
@@ -185,8 +185,8 @@ abstract class Parser extends Node {
 	 */
 	public function __construct($source, array $options = array()) {
 		
-		if(!static::$namespace)
-			list(static::$namespace) = Library::get_class_info(get_class($this));
+		if(!static::$handler_namespace)
+			list(static::$handler_namespace) = Library::get_class_info(get_class($this));
 		
 		if(!static::$handler_directory)
 			list(,,static::$handler_directory) = Library::get_class_info(get_class($this));
@@ -244,7 +244,10 @@ abstract class Parser extends Node {
 				};
 			} elseif(is_resource($this->source)) {
 				$get_line = function(&$source) {
-					return rtrim(fgets($source), "\r\n");
+					if(feof($source))
+						return false;
+					else
+						return rtrim(fgets($source), "\r\n");
 				};
 			} else
 				throw new Exception('Sanity error: unexpected source type - ' . typeof($this->source));
@@ -268,7 +271,7 @@ abstract class Parser extends Node {
 		$this->line_number = 0;
 		$this->indent_level = 0;
 		
-		while($this->content = $this->get_line()) {
+		while(($this->content = $this->get_line()) !== false) {
 			$this->line_number ++;
 			
 			$this->update_context();
