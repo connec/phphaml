@@ -35,7 +35,11 @@ class TextHandler extends LineHandler {
 	 */
 	public function render() {
 		
-		return str_repeat($this->parser->indent_string(), $this->indent_level) . $this->content;
+		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
+		
+		$this->content = new InterpolatedString($this->content, $this);
+		
+		return $indent . $this->content;
 		
 	}
 	

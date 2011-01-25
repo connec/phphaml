@@ -51,6 +51,16 @@ class Parser extends \phphaml\Parser {
 		
 	}
 	
+	/**
+	 * Renders the parsed tree.
+	 */
+	public function render() {
+		
+		Value::variables($this->variables);
+		return parent::render();
+		
+	}
+	
 }
 
 ?>
