@@ -22,9 +22,27 @@ class TextHandler extends LineHandler {
 	protected static $trigger = '*';
 	
 	/**
+	 * Indicates whether this line's content should be escaped.
+	 */
+	protected $escape;
+	
+	/**
 	 * Parses the content of this node.
 	 */
 	public function parse() {
+		
+		if(preg_match('/^(?:(?:!|&) |(?:!|&|)=)/', $this->content)) {
+			if($this->content[0] == '&' or $this->content[0] == '!') {
+				$this->escape = $this->content[0] == '&';
+				$this->content = substr($this->content, 1);
+			}
+			
+			if($this->content[0] == '=')
+				$this->content = '#{' . trim(substr($this->content, 1)) . '}';
+		}
+		
+		if($this->escape === null)
+			$this->escape = $this->parser->option('escape_html');
 		
 		$this->parser->expect_indent(Parser::EXPECT_LESS | Parser::EXPECT_SAME);
 		
@@ -36,6 +54,9 @@ class TextHandler extends LineHandler {
 	public function render() {
 		
 		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
+		
+		if($this->escape)
+			$this->content = htmlentities($this->content);
 		
 		$this->content = new InterpolatedString($this->content, $this);
 		
