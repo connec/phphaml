@@ -84,6 +84,15 @@ class DoctypeHandler extends LineHandler {
 		
 	}
 	
+	/**
+	 * Renders the parsed tree.
+	 */
+	protected function _render() {
+		
+		return $this->content;
+		
+	}
+	
 }
 
 ?>

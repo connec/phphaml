@@ -51,7 +51,7 @@ class TextHandler extends LineHandler {
 	/**
 	 * Renders the parsed tree.
 	 */
-	public function render() {
+	public function _render() {
 		
 		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
 		

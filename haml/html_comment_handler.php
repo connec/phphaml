@@ -48,7 +48,7 @@ class HtmlCommentHandler extends LineHandler {
 	 * 
 	 * Naturally, for HAML comments this returns an empty string.
 	 */
-	public function render() {
+	public function _render() {
 		
 		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
 		

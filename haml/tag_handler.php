@@ -71,6 +71,16 @@ class TagHandler extends LineHandler {
 	protected $self_closing = false;
 	
 	/**
+	 * A flag indicating whether or not this tag should have surrounding whitespace.
+	 */
+	protected $outer_whitespace = true;
+	
+	/**
+	 * A flag indicating whether or not this tag should have inner whitespace.
+	 */
+	protected $inner_whitespace = true;
+	
+	/**
 	 * Handles the current line in the given parser.
 	 * 
 	 * This is used instead of the parser appending to the tree itself in order to deal with
@@ -210,6 +220,18 @@ class TagHandler extends LineHandler {
 	 */
 	protected function parse_end() {
 		
+		while(($token = $this->content[0]) == '<' or $this->content[0] == '>') {
+			$this->content = substr($this->content, 1);
+			
+			if($token == '<')
+				$this->inner_whitespace = false;
+			else
+				$this->outer_whitespace = false;
+		}
+		
+		if(in_array($this->tag, $this->parser->option('preserve')))
+			$this->inner_whitespace = false;
+		
 		if($this->content[0] == '/') {
 			if($this->content != '/')
 				$this->exception('Parse error: self-closing tags cannot have content');
@@ -230,29 +252,36 @@ class TagHandler extends LineHandler {
 	/**
 	 * Renders the parsed tree.
 	 */
-	public function render() {
-
+	public function _render() {
+		
 		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
-		$open_tag = $indent . '<' . $this->tag . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
+		$open_tag = '<' . $this->tag . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
 		$close_tag = '</' . $this->tag . '>';
-
+		
+		if(!$this->inner_whitespace) {
+			foreach($this->children as $child) {
+				if($child->indent_level)
+					$child->indent_level --;
+			}
+		}
+		
 		if($this->self_closing) {
 			if($this->parser->option('format') == 'xhtml')
-				return substr($open_tag, 0, -1) . ' />';
-			else
-				return $open_tag;
+				$open_tag = substr($open_tag, 0, -1) . ' />';
+			
+			return $indent . $open_tag;
 		}
-
-		if(empty($this->children)) {
-			return $open_tag
-				. $this->content
-				. $close_tag;
-		}
-
-		return $open_tag . "\n"
-			. $this->render_children() . "\n"
-			. $indent . $close_tag;
-
+		
+		if(empty($this->children))
+			return $indent . $open_tag . $this->content . $close_tag;
+		
+		return
+			  $indent . $open_tag
+			. ($this->inner_whitespace ? "\n" : '')
+			. $this->render_children()
+			. ($this->inner_whitespace ? "\n$indent" : '')
+			. $close_tag;
+		
 	}
 	
 	/**

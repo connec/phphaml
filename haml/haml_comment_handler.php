@@ -37,7 +37,7 @@ class HamlCommentHandler extends LineHandler {
 	 * 
 	 * Naturally, for HAML comments this returns an empty string.
 	 */
-	public function render() {
+	public function _render() {
 		
 		return '';
 		

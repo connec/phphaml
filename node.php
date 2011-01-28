@@ -50,14 +50,20 @@ abstract class Node {
 	protected $content;
 	
 	/**
+	 * Returns the first child of this node, or false if there are no children.
+	 */
+	public function first_child() {
+		
+		return empty($this->children) ? false : reset($this->children);
+		
+	}
+	
+	/**
 	 * Returns the last child of this node, or false if there are no children.
 	 */
 	public function last_child() {
 		
-		if(empty($this->children))
-			return false;
-		
-		return end($this->children);
+		return empty($this->children) ? false : end($this->children);
 		
 	}
 	

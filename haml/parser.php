@@ -57,7 +57,14 @@ class Parser extends \phphaml\Parser {
 	public function render() {
 		
 		Value::variables($this->variables);
-		return parent::render();
+		
+		if(!$this->line_number)
+			$this->parse();
+		
+		$result = '';
+		foreach($this->children as $child)
+			$result .= $child->render();
+		return rtrim($result);
 		
 	}
 	

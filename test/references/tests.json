@@ -168,6 +168,11 @@
     },
 
     "multiple simple Haml tags" : {
+      "haml" : "%div\n%div\n%div",
+      "html" : "<div></div>\n<div></div>\n<div></div>"
+    },
+
+    "multiple nested simple Haml tags" : {
       "haml" : "%div\n  %div\n    %p",
       "html" : "<div>\n  <div>\n    <p></p>\n  </div>\n</div>"
     }
