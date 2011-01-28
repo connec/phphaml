@@ -27,6 +27,22 @@ class TextHandler extends LineHandler {
 	protected $escape;
 	
 	/**
+	 * Initialises the node.
+	 */
+	public function __construct(Parser $parser, TagHandler $parent = null) {
+		
+		$this->parser = $parser;
+		
+		if($parent) {
+			$this->parent = $parent;
+			$this->render_newline = false;
+			$this->content = $parent->content;
+		} else
+			parent::__construct($parser);
+		
+	}
+	
+	/**
 	 * Parses the content of this node.
 	 */
 	public function parse() {
@@ -61,6 +77,15 @@ class TextHandler extends LineHandler {
 		$this->content = new InterpolatedString($this->content, $this);
 		
 		return $indent . $this->content;
+		
+	}
+	
+	/**
+	 * Returns the string representation (render) of this text node.
+	 */
+	public function __toString() {
+		
+		return $this->render();
 		
 	}
 	

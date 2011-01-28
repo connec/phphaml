@@ -244,8 +244,8 @@ class TagHandler extends LineHandler {
 		} elseif($this->content == '' and in_array($this->tag, $this->parser->option('autoclose')))
 			$this->self_closing = true;
 		
-		if(trim($this->content))
-			$this->content = new InterpolatedString(trim($this->content), $this);
+		if($this->content = trim($this->content))
+			$this->content = new TextHandler($this->parser, $this);
 		
 		if($this->self_closing or $this->content)
 			$this->parser->expect_indent(Parser::EXPECT_LESS | Parser::EXPECT_SAME);
