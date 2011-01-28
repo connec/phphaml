@@ -225,8 +225,11 @@ class TagHandler extends LineHandler {
 			
 			if($token == '<')
 				$this->inner_whitespace = false;
-			else
+			else {
 				$this->outer_whitespace = false;
+				$this->previous_sibling()->render_newline = false;
+				$this->render_newline = false;
+			}
 		}
 		
 		if(in_array($this->tag, $this->parser->option('preserve')))
@@ -258,13 +261,6 @@ class TagHandler extends LineHandler {
 		$open_tag = '<' . $this->tag . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
 		$close_tag = '</' . $this->tag . '>';
 		
-		if(!$this->inner_whitespace) {
-			foreach($this->children as $child) {
-				if($child->indent_level)
-					$child->indent_level --;
-			}
-		}
-		
 		if($this->self_closing) {
 			if($this->parser->option('format') == 'xhtml')
 				$open_tag = substr($open_tag, 0, -1) . ' />';
@@ -275,11 +271,12 @@ class TagHandler extends LineHandler {
 		if(empty($this->children))
 			return $indent . $open_tag . $this->content . $close_tag;
 		
+		if($this->inner_whitespace)
+			return $indent . $open_tag . "\n" . $this->render_children() . "\n" . $indent . $close_tag;
+		
 		return
 			  $indent . $open_tag
-			. ($this->inner_whitespace ? "\n" : '')
-			. $this->render_children()
-			. ($this->inner_whitespace ? "\n$indent" : '')
+			. ltrim(str_replace("\n" . $this->parser->indent_string(), "\n", $this->render_children()))
 			. $close_tag;
 		
 	}

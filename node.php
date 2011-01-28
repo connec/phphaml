@@ -50,24 +50,6 @@ abstract class Node {
 	protected $content;
 	
 	/**
-	 * Returns the first child of this node, or false if there are no children.
-	 */
-	public function first_child() {
-		
-		return empty($this->children) ? false : reset($this->children);
-		
-	}
-	
-	/**
-	 * Returns the last child of this node, or false if there are no children.
-	 */
-	public function last_child() {
-		
-		return empty($this->children) ? false : end($this->children);
-		
-	}
-	
-	/**
 	 * Accessor for {$line_number}.
 	 */
 	public function line_number() {
@@ -91,6 +73,68 @@ abstract class Node {
 	public function content() {
 		
 		return $this->content;
+		
+	}
+	
+	/**
+	 * Returns the first child of this node, or false if there are no children.
+	 */
+	public function first_child() {
+		
+		return empty($this->children) ? false : reset($this->children);
+		
+	}
+	
+	/**
+	 * Returns the last child of this node, or false if there are no children.
+	 */
+	public function last_child() {
+		
+		return empty($this->children) ? false : end($this->children);
+		
+	}
+	
+	/**
+	 * Returns the previous child relative to a context child.
+	 */
+	public function previous_child($context) {
+		
+		if($context->index == $this->first_child()->index)
+			return false;
+		
+		return $this->children[$context->index - 1];
+		
+	}
+	
+	/**
+	 * Returns the next child relative to a context child.
+	 */
+	public function next_child($context) {
+		
+		if($context->index == $this->last_child()->index)
+			return false;
+		
+		return $this->children[$context->index + 1];
+		
+	}
+	
+	/**
+	 * Returns the previous node in this node's parent's children, or false if this is the first 
+	 * sibling.
+	 */
+	public function previous_sibling() {
+		
+		return $this->parent->previous_child($this);
+		
+	}
+	
+	/**
+	 * Returns the previous node in this node's parent's children, or false if this is the first 
+	 * sibling.
+	 */
+	public function next_sibling() {
+		
+		return $this->parent->next_child($this);
 		
 	}
 	
