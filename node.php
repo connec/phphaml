@@ -27,7 +27,7 @@ abstract class Node {
 	 * 
 	 * This is stored to enable easily removing 
 	 */
-	protected $index;
+	protected $index = 0;
 	
 	/**
 	 * The children of this node.
@@ -37,17 +37,17 @@ abstract class Node {
 	/**
 	 * The line number of this node.
 	 */
-	protected $line_number;
+	protected $line_number = 0;
 	
 	/**
 	 * The indentation level of this node.
 	 */
-	protected $indent_level;
+	protected $indent_level = 0;
 	
 	/**
 	 * The content of this node.
 	 */
-	protected $content;
+	protected $content = '';
 	
 	/**
 	 * Accessor for {$line_number}.
