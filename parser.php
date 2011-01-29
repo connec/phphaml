@@ -88,7 +88,7 @@ abstract class Parser extends Node {
 	/**
 	 * When set, the named handler will be used on the next non-empty source line.
 	 */
-	protected $force_handler;
+	protected $force_handler = false;
 	
 	/**
 	 * Finds handlers in this Parser's directory.
@@ -276,33 +276,8 @@ abstract class Parser extends Node {
 			
 			$this->update_context();
 			
-			if(trim($this->content)) {
-				$handled = false;
-				
-				if($this->force_handler) {
-					$handled = true;
-					$handler = $this->force_handler;
-					$handler::handle($this);
-				} else {
-					foreach(static::$handlers as $trigger => $handler) {
-						if($trigger == '*')
-							continue; // Leave the wildcard trigger until last.
-						if(substr($this->content, 0, strlen($trigger)) == $trigger) {
-							$handled = true;
-							$handler::handle($this);
-						}
-					}
-				}
-				
-				if(!$handled and isset(static::$handlers['*'])) {
-					$handled = true;
-					$handler = static::$handlers['*'];
-					$handler::handle($this);
-				}
-				
-				if(!$handled)
-					$this->exception('Parse error: unexpected input');
-			}
+			if($this->content = trim($this->content))
+				$this->handle();
 		}
 		
 	}
@@ -325,8 +300,6 @@ abstract class Parser extends Node {
 
 			if(str_replace($this->indent_string, '', $match[0]))
 				$this->exception('Parse error: mixed indentation');
-
-			$this->content = substr($this->content, strlen($match[0]));
 		} else {
 			$indent_level = 0;
 		}
@@ -359,6 +332,40 @@ abstract class Parser extends Node {
 		$this->indent_level = $indent_level;
 		$this->expect_indent = self::EXPECT_ANY;
 
+	}
+	
+	/**
+	 * Handles a line of source.
+	 */
+	public function handle() {
+		
+		$handled = false;
+				
+		if($this->force_handler) {
+			$handled = true;
+			$handler = $this->force_handler;
+			$this->force_handler = false;
+			$handler::handle($this);
+		} else {
+			foreach(static::$handlers as $trigger => $handler) {
+				if($trigger == '*')
+					continue; // Leave the wildcard trigger until last.
+				if(substr($this->content, 0, strlen($trigger)) == $trigger) {
+					$handled = true;
+					$handler::handle($this);
+				}
+			}
+		}
+		
+		if(!$handled and isset(static::$handlers['*'])) {
+			$handled = true;
+			$handler = static::$handlers['*'];
+			$handler::handle($this);
+		}
+		
+		if(!$handled)
+			$this->exception('Parse error: unexpected input');
+		
 	}
 	
 }
