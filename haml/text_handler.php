@@ -22,21 +22,26 @@ class TextHandler extends LineHandler {
 	protected static $trigger = '*';
 	
 	/**
-	 * Indicates whether this line's content should be escaped.
+	 * Indicates whether this line's contents should be escaped.
 	 */
 	protected $escape;
+	
+	/**
+	 * Indicates whether this line's contents should be whitespace preserved.
+	 */
+	protected $preserve;
 	
 	/**
 	 * Initialises the node.
 	 */
 	public function __construct(Parser $parser, TagHandler $parent = null) {
 		
-		$this->parser = $parser;
-		
 		if($parent) {
+			$this->parser = $parser;
 			$this->parent = $parent;
 			$this->render_newline = false;
 			$this->content = $parent->content;
+			$this->parse();
 		} else
 			parent::__construct($parser);
 		
@@ -47,18 +52,23 @@ class TextHandler extends LineHandler {
 	 */
 	public function parse() {
 		
-		if(preg_match('/^(?:(?:!|&) |(?:!|&|)=)/', $this->content)) {
+		if(preg_match('/^(?:(?:!|&) |(?:!|&|)(?:=|~))/', $this->content)) {
 			if($this->content[0] == '&' or $this->content[0] == '!') {
 				$this->escape = $this->content[0] == '&';
 				$this->content = substr($this->content, 1);
 			}
 			
-			if($this->content[0] == '=')
+			if($this->content[0] == '~')
+				$this->preserve = true;
+			
+			if($this->content[0] == '=' or $this->content[0] == '~')
 				$this->content = '#{' . trim(substr($this->content, 1)) . '}';
 		}
 		
 		if($this->escape === null)
 			$this->escape = $this->parser->option('escape_html');
+		
+		$this->content = new InterpolatedString($this->content, $this);
 		
 		$this->parser->expect_indent(Parser::EXPECT_LESS | Parser::EXPECT_SAME);
 		
@@ -70,13 +80,17 @@ class TextHandler extends LineHandler {
 	public function _render() {
 		
 		$indent = str_repeat($this->parser->indent_string(), $this->indent_level);
+		$this->content = $indent . (string)$this->content;
 		
 		if($this->escape)
 			$this->content = htmlentities($this->content);
 		
-		$this->content = new InterpolatedString($this->content, $this);
+		if($this->preserve)
+			$this->preserve();
 		
-		return $indent . $this->content;
+		$this->content = str_replace("\n", "\n$indent", $this->content);
+		
+		return $this->content;
 		
 	}
 	
@@ -86,6 +100,24 @@ class TextHandler extends LineHandler {
 	public function __toString() {
 		
 		return $this->render();
+		
+	}
+	
+	/**
+	 * Replaces linebreaks in preserved tags with "&#x000A;".
+	 */
+	protected function preserve() {
+		
+		$re = '/<(' . implode('|', $this->parser->option('preserve')) . ")>.*?\n.*?<\/\\1>/i";
+		
+		while(preg_match($re, $this->content, $match, PREG_OFFSET_CAPTURE)) {
+			$this->content = substr_replace(
+				$this->content,
+				str_replace("\n", '&#x000A;', $match[0][0]),
+				$match[0][1],
+				strlen($match[0][0])
+			);
+		}
 		
 	}
 	
