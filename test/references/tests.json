@@ -477,8 +477,8 @@
     },
 
     "content in a 'preserve' filter" : {
-      "haml" : ":preserve\n  hello\n\n%p",
-      "html" : "hello&#x000A;\n<p></p>"
+      "haml" : ":preserve\n  hello\n  was\n%p",
+      "html" : "hello&#x000A;was\n<p></p>"
     },
 
     "content in a 'plain' filter" : {
