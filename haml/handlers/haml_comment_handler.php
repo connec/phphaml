@@ -4,7 +4,7 @@
  * haml_comment_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
 
 /**
  * The HamlCommentHandler handles HAML comments.

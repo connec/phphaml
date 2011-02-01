@@ -45,8 +45,12 @@ class EvalString {
 	 */
 	public function evaluate() {
 		
-		extract(static::$variables);
-		return eval('return (' . $this->content . ');');
+		$evaluate = function($__variables__, $__content__) {
+			extract($__variables__);
+			return eval('return (' . $__content__ . ');');
+		};
+		
+		return $evaluate(static::$variables, $this->content);
 		
 	}
 	

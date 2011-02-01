@@ -4,9 +4,11 @@
  * filter_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
 
-use \phphaml\Library;
+use
+	\phphaml\Library,
+	\phphaml\haml\InterpolatedString;
 
 /**
  * The FilterHandler handles filtered blocks.
@@ -91,7 +93,7 @@ class FilterHandler extends LineHandler {
 	public function parse() {
 		
 		if(!static::$filter_namespace) {
-			list(static::$filter_namespace) = Library::get_class_info(get_class($this));
+			list(static::$filter_namespace) = Library::get_class_info(get_class($this->parser));
 			static::$filter_namespace .= '\\filters';
 		}
 		

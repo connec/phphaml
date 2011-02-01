@@ -4,7 +4,11 @@
  * test_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
+
+use
+	\phphaml\haml\InterpolatedString,
+	\phphaml\haml\Parser;
 
 /**
  * The TextHandler class handles text lines in a HAML source.

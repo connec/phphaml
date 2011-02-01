@@ -4,9 +4,11 @@
  * tag_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
 
 use
+	\phphaml\haml\Parser,
+	\phphaml\haml\Value,
 	\phphaml\haml\ruby\RubyHash,
 	\phphaml\haml\ruby\RubyValue;
 

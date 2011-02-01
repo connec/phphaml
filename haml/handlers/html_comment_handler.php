@@ -4,7 +4,9 @@
  * html_comment_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
+
+use \phphaml\haml\Parser;
 
 /**
  * The HtmlCommentHandler handles HTML comments in a HAML document.

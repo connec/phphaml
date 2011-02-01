@@ -4,7 +4,7 @@
  * line_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
 
 /**
  * The LineHandler class provides base functionality to child line handlers.

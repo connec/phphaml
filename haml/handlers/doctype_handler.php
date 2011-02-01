@@ -4,7 +4,9 @@
  * doctype_handler.php
  */
 
-namespace phphaml\haml;
+namespace phphaml\haml\handlers;
+
+use \phphaml\haml\Parser;
 
 /**
  * The DoctypeHandler class handles DOCTYPE / XML declarations in a HAML source.
