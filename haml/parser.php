@@ -56,7 +56,7 @@ class Parser extends \phphaml\Parser {
 	 */
 	public function render() {
 		
-		InterpolatedString::variables($this->variables);
+		EvalString::variables($this->variables);
 		
 		if(!$this->line_number)
 			$this->parse();

@@ -6,10 +6,6 @@
 
 namespace phphaml\haml;
 
-use
-	\phphaml\Node,
-	\phphaml\StringStream;
-
 /**
  * The InterpolatedString class handles parsing of ruby-style interpolated strings.
  */
@@ -17,66 +13,47 @@ use
 class InterpolatedString {
 	
 	/**
-	 * The variables to use when rendering this value.
-	 */
-	protected static $variables = array();
-	
-	/**
-	 * The Node that instantiated this object.
-	 */
-	protected $node;
-	
-	/**
 	 * The content of the value.
 	 */
-	protected $content;
+	protected $content = array();
 	
 	/**
-	 * Sets the variables to use when rendering.
+	 * Fixes backslashes.
 	 */
-	public static function variables(array $variables) {
+	protected static function fix_slashes($string) {
 		
-		static::$variables = $variables;
+		return str_replace(array('\#', '\\\\'), array('#', '\\'), $string);
 		
 	}
 	
 	/**
 	 * Instantiates the interpolated string and parses it.
 	 */
-	public function __construct($string, Node $node) {
+	public function __construct($content) {
 		
-		$this->node = $node;
-		
-		$re_find = array(
-			'/(^|[^\\\\]|[\\\\][\\\\])#\{(.*?)\}/',
-			'/(^|[^\\\\]|[\\\\][\\\\])\\\#/',
-			'/(^|[^\\\\]|[\\\\][\\\\])[\\\\][\\\\]/'
-		);
-		$replace = array('$1<?php echo($2); ?>', '$1#', '$1\\');
-		$this->content = preg_replace($re_find, $replace, $string);
-		
-	}
-	
-	/**
-	 * Returns the PHP string to generate the value's result.
-	 */
-	public function get_php() {
-		
-		return $this->content;
+		while(preg_match('/(?:^|[^\\\\]|[\\\\][\\\\])(#\{)(.*?)\}/', $content, $matches, PREG_OFFSET_CAPTURE)) {
+			if($s = substr($content, 0, $matches[1][1]))
+				$this->content[] = static::fix_slashes($s);
+			
+			$this->content[] = new EvalString($matches[2][0]);
+			
+			$content = substr($content, $matches[2][1] + strlen($matches[2][0]) + 1);
+		}
+		$this->content[] = static::fix_slashes($content);
 		
 	}
 	
 	/**
 	 * Returns the result of rendering the string with the assigned variables.
 	 */
-	public function get_text() {
+	public function result() {
 		
-		StringStream::set('interpolatedstring', $this->content);
-		extract(static::$variables);
+		$result = '';
 		
-		ob_start();
-		include 'string://interpolatedstring';
-		return ob_get_clean();
+		foreach($this->content as $content)
+			$result .= (string) $content;
+		
+		return $result;
 		
 	}
 	
@@ -85,7 +62,7 @@ class InterpolatedString {
 	 */
 	public function __toString() {
 		
-		return $this->get_text();
+		return $this->result();
 		
 	}
 	

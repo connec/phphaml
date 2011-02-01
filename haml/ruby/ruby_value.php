@@ -7,13 +7,14 @@
 namespace phphaml\haml\ruby;
 
 use
-	\phphaml\Node;
+	\phphaml\Node,
+	\phphaml\haml\Value;
 
 /**
  * The RubyValue class represents an arbitrary value in a ruby-style attribute hash.
  */
 
-class RubyValue extends \phphaml\haml\Value {
+class RubyValue extends Value {
 	
 	/**
 	 * Instantiates the RubyValue and determines its type and content.
@@ -24,7 +25,7 @@ class RubyValue extends \phphaml\haml\Value {
 			if(!preg_match('/^:[a-z0-9]+/i', $value))
 				$node->exception('Parse error: invalid character in symbol');
 			
-			$this->content = substr($value, 1);
+			$this->content[] = substr($value, 1);
 		} else
 			parent::__construct($value, $node);
 		
