@@ -95,6 +95,16 @@ abstract class Parser extends Node {
 	 */
 	protected static function find_handlers() {
 		
+		if(!static::$handler_namespace) {
+			list(static::$handler_namespace) = Library::get_class_info(get_called_class());
+			static::$handler_namespace .= '\\' . 'handlers';
+		}
+		
+		if(!static::$handler_directory) {
+			list(,,static::$handler_directory) = Library::get_class_info(get_called_class());
+			static::$handler_directory .= 'handlers' . DIRECTORY_SEPARATOR;
+		}
+		
 		foreach(glob(static::$handler_directory . '*_handler.php') as $file) {
 			$file = substr(basename($file), 0, -4);
 			$handler = static::$handler_namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
@@ -184,12 +194,6 @@ abstract class Parser extends Node {
 	 * Initialises the parser with given source and options.
 	 */
 	public function __construct($source, array $options = array()) {
-		
-		if(!static::$handler_namespace)
-			list(static::$handler_namespace) = Library::get_class_info(get_class($this));
-		
-		if(!static::$handler_directory)
-			list(,,static::$handler_directory) = Library::get_class_info(get_class($this));
 		
 		if(empty(static::$handlers))
 			static::find_handlers();
