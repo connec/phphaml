@@ -616,5 +616,13 @@
       "haml" : "%p<\n  hello\n  world",
       "html" : "<p>hello\nworld</p>"
     }
+  },
+  
+  "PHP interpretation" : {
+  	
+  	"a PHP variable assignment and display" : {
+  		"haml" : "- $var = 'hello'\n= $var",
+  		"html" : "hello"
+  	}
   }
 }
