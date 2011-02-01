@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ruby_list.php
+ * ruby_array.php
  */
 
 namespace phphaml\haml\ruby;
