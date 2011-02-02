@@ -110,14 +110,14 @@ class Tag extends Node {
 		}
 		
 		if(!empty($class)) {
-			sort($class);
+			natcasesort($class);
 			$attributes[] = 'class=' . $q . implode(' ', $class) . $q;
 		}
 		
 		if(!empty($id))
 			$attributes[] = 'id=' . $q . implode('_', $id) . $q;
 		
-		sort($attributes);
+		natcasesort($attributes);
 		return implode(' ', $attributes);
 		
 	}
