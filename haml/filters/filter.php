@@ -11,15 +11,19 @@ use
 	\phphaml\haml\Parser;
 
 /**
- * The Filter interface provides abstract methods for all filters.
+ * The Filter class provides abstract methods for all filters.
  */
 
-interface Filter {
+class Filter {
 	
 	/**
 	 * Filters the given content.
 	 */
-	public static function filter(Parser $parser, Node $node, array $content);
+	public static function filter(Node $node) {
+		
+		throw new Exception('Sanity error: filters must implement the filter() method.');
+		
+	}
 	
 }
 

@@ -11,7 +11,7 @@ namespace phphaml;
  * source lines.
  */
 
-abstract class Parser extends Node {
+abstract class Parser {
 	
 	/**
 	 * A flag representing that less indentation is required on the next line.
@@ -32,20 +32,6 @@ abstract class Parser extends Node {
 	 * A flag representing that any indentation can be given on the next line.
 	 */
 	const EXPECT_ANY = 7;
-	
-	/**
-	 * The namespace the handlers are in.
-	 * 
-	 * Note: this can be left blank to reduce configuration.
-	 */
-	protected static $handler_namespace;
-	
-	/**
-	 * The directory this parser's line handlers are in.
-	 * 
-	 * Note: for portability this should be left blank to be assigned at runtime.
-	 */
-	protected static $handler_directory;
 	
 	/**
 	 * An array of line handler classes for this parser.
@@ -73,11 +59,31 @@ abstract class Parser extends Node {
 	protected $indent_string;
 	
 	/**
+	 * The root node of the tree.
+	 */
+	protected $root;
+	
+	/**
 	 * The context node in the tree.
 	 * 
 	 * This will be the parent of any created nodes.
 	 */
 	protected $context;
+	
+	/**
+	 * The number of the line being handled.
+	 */
+	protected $line_number;
+	
+	/**
+	 * The indentation level of the line being handled.
+	 */
+	protected $indent_level;
+	
+	/**
+	 * The content of the line being handled.
+	 */
+	protected $content;
 	
 	/**
 	 * A flag indicating what indentation to expect on the next line relative to the current
@@ -95,19 +101,14 @@ abstract class Parser extends Node {
 	 */
 	protected static function find_handlers() {
 		
-		if(!static::$handler_namespace) {
-			list(static::$handler_namespace) = Library::get_class_info(get_called_class());
-			static::$handler_namespace .= '\\' . 'handlers';
-		}
+		$class_info = Library::get_class_info(get_called_class());
+		$handler_namespace = $class_info['namespace'] . '\\handlers';
 		
-		if(!static::$handler_directory) {
-			list(,,static::$handler_directory) = Library::get_class_info(get_called_class());
-			static::$handler_directory .= 'handlers' . DIRECTORY_SEPARATOR;
-		}
-		
-		foreach(glob(static::$handler_directory . '*_handler.php') as $file) {
-			$file = substr(basename($file), 0, -4);
-			$handler = static::$handler_namespace . '\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $file)));
+		foreach(scandir(Library::directory_from_namespace($handler_namespace)) as $file_name) {
+			if($file_name[0] == '.')
+				continue;
+			
+			$handler = $handler_namespace . '\\' . Library::class_name_from_file_name($file_name);
 			$trigger = $handler::trigger();
 			
 			if(!$trigger)
@@ -119,6 +120,9 @@ abstract class Parser extends Node {
 				static::$handlers[$trigger] = $handler;
 		}
 		
+		if(empty(static::$handlers))
+			throw new Exception('Sanity error: there are no handlers');
+		
 		uksort(static::$handlers, function($a, $b) {
 			if(strlen($a)  < strlen($b)) return -1;
 			if(strlen($a) == strlen($b)) return  0;
@@ -129,6 +133,15 @@ abstract class Parser extends Node {
 	
 	/**
 	 * Accessor for {$options}.
+	 */
+	public function options() {
+		
+		return $this->options;
+		
+	}
+	
+	/**
+	 * Accessor for individual options.
 	 */
 	public function option($key) {
 		
@@ -163,6 +176,33 @@ abstract class Parser extends Node {
 	public function context() {
 		
 		return $this->context;
+		
+	}
+	
+	/**
+	 * Accessor for {$line_number}.
+	 */
+	public function line_number() {
+		
+		return $this->line_number;
+		
+	}
+	
+	/**
+	 * Accessor for {$indent_level}.
+	 */
+	public function indent_level() {
+		
+		return $this->indent_level;
+		
+	}
+	
+	/**
+	 * Accessor for {$content}.
+	 */
+	public function content() {
+		
+		return $this->content;
 		
 	}
 	
@@ -216,6 +256,34 @@ abstract class Parser extends Node {
 	}
 	
 	/**
+	 * Parses the source.
+	 * 
+	 * Most actual parsing is delegated to discovered handlers.
+	 */
+	public function parse() {
+		
+		foreach(static::$handlers as $handler)
+			$handler::reset();
+		Handler::set_parser($this);
+		
+		$this->root = new RootNode($this);
+		$this->context = $this->root;
+		
+		$this->line_number = 0;
+		$this->indent_level = 0;
+		
+		while(($this->content = $this->get_line()) !== false) {
+			$this->line_number ++;
+			
+			$this->update_context();
+			
+			if($this->content = trim($this->content))
+				$this->handle();
+		}
+		
+	}
+	
+	/**
 	 * Renders the parsed tree.
 	 */
 	public function render() {
@@ -258,31 +326,6 @@ abstract class Parser extends Node {
 		}
 		
 		return $get_line($this->source);
-		
-	}
-	
-	/**
-	 * Parses the source.
-	 * 
-	 * Note: most actual parsing is delegated to discovered handlers.
-	 */
-	public function parse() {
-		
-		// Set up the tree.
-		$this->children = array();
-		$this->context = $this;
-		
-		$this->line_number = 0;
-		$this->indent_level = 0;
-		
-		while(($this->content = $this->get_line()) !== false) {
-			$this->line_number ++;
-			
-			$this->update_context();
-			
-			if($this->content = trim($this->content))
-				$this->handle();
-		}
 		
 	}
 	
@@ -349,7 +392,7 @@ abstract class Parser extends Node {
 			$handled = true;
 			$handler = $this->force_handler;
 			$this->force_handler = false;
-			$handler::handle($this);
+			$handler::handle();
 		} else {
 			foreach(static::$handlers as $trigger => $handler) {
 				if($trigger == '*')
@@ -364,11 +407,21 @@ abstract class Parser extends Node {
 		if(!$handled and isset(static::$handlers['*'])) {
 			$handled = true;
 			$handler = static::$handlers['*'];
-			$handler::handle($this);
+			$handler::handle();
 		}
 		
 		if(!$handled)
 			$this->exception('Parse error: unexpected input');
+		
+	}
+	
+	/**
+	 * Throws an exception, and appends the line number to the given message.
+	 */
+	public function exception($message, array $sub = array()) {
+		
+		$sub['line'] = $this->line_number;
+		throw new Exception($message . ' - line :line', $sub);
 		
 	}
 	

@@ -6,6 +6,8 @@
 
 namespace phphaml\haml;
 
+use \phphaml\haml\filters\Filter;
+
 /**
  * The Parser class forms the root of a source document, and handles traversing and delegating the
  * source lines.
@@ -62,8 +64,8 @@ class Parser extends \phphaml\Parser {
 			$this->parse();
 		
 		$result = '';
-		foreach($this->children as $child)
-			$result .= $child->render();
+		foreach($this->root->children as $child)
+			$result .= $child->render() . ($child->append_newline ? "\n" : '');
 		return rtrim($result);
 		
 	}

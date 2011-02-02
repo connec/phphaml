@@ -6,22 +6,20 @@
 
 namespace phphaml\haml\filters;
 
-use
-	\phphaml\Node,
-	\phphaml\haml\Parser;
+use \phphaml\Node;
 
 /**
  * The Preserve filter escapes whitespace in a block.
  */
 
-class Preserve implements Filter {
+class Preserve extends Filter {
 	
 	/**
 	 * Filters the given content.
 	 */
-	public static function filter(Parser $parser, Node $node, array $content) {
+	public static function filter(Node $node) {
 		
-		return implode('&#x000A;', $content);
+		return implode('&#x000A;', $node->content);
 		
 	}
 	

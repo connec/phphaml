@@ -6,40 +6,38 @@
 
 namespace phphaml\haml\filters;
 
-use
-	\phphaml\Node,
-	\phphaml\haml\Parser;
+use \phphaml\Node;
 
 /**
  * The javascript filter wraps the content in script and CDATA tags.
  */
 
-class Javascript implements Filter {
+class Javascript extends Filter {
 	
 	/**
 	 * Filters the given content.
 	 */
-	public static function filter(Parser $parser, Node $node, array $content) {
+	public static function filter(Node $node) {
 		
-		foreach($content as &$line)
-			$line = str_repeat($parser->indent_string(), 2) . $line;
+		foreach($node->content as &$line)
+			$line = str_repeat($node->indent_string(), 2) . $line;
 		
-		$indent = str_repeat($parser->indent_string(), $node->indent_level());
+		$indent = str_repeat($node->indent_string(), $node->indent_level);
 		
-		$q = $parser->option('attr_wrapper');
+		$q = $node->option('attr_wrapper');
 		array_unshift(
-			$content,
+			$node->content,
 			$indent . "<script type={$q}text/javascript{$q}>",
-			$indent . $parser->indent_string() . '//<![CDATA['
+			$indent . $node->indent_string() . '//<![CDATA['
 		);
 		
 		array_push(
-			$content,
-			$indent . $parser->indent_string() . '//]]>',
+			$node->content,
+			$indent . $node->indent_string() . '//]]>',
 			$indent . '</script>'
 		);
 		
-		return $content;
+		return $node->content;
 		
 	}
 	

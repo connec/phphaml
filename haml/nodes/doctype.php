@@ -1,27 +1,16 @@
 <?php
 
 /**
- * doctype_handler.php
+ * doctype.php
  */
 
-namespace phphaml\haml\handlers;
-
-use \phphaml\haml\Parser;
+namespace phphaml\haml\nodes;
 
 /**
- * The DoctypeHandler class handles DOCTYPE / XML declarations in a HAML source.
+ * The Doctype node represents a doctype or XML declaration in a HAML document.
  */
 
-class DoctypeHandler extends LineHandler {
-	
-	/**
-	 * The start-of-line trigger for this handler.
-	 * 
-	 * Note: line handling is ordered by the length of the trigger.
-	 * Note: the catch-all trigger '*' is treated specially, and only one should be defined per
-	 * parser (where more than one is defined, which one is chosen is undefined).
-	 */
-	protected static $trigger = '!!!';
+class Doctype extends Node {
 	
 	/**
 	 * The available doctypes.
@@ -53,45 +42,43 @@ class DoctypeHandler extends LineHandler {
 	protected static $xml_declaration = '<?xml version=%s encoding=%s ?>';
 	
 	/**
-	 * Parses the content of this node.
+	 * The encoding to use in the xml declaration or false if this is a doctype.
 	 */
-	public function parse() {
+	public $encoding = false;
+	
+	/**
+	 * The doctype to use or false if this is an xml declaration.
+	 */
+	public $doctype = false;
+	
+	/**
+	 * Retrives the specified doctype or false if it does not exist.
+	 */
+	public function doctype($format, $doctype = 'transitional') {
 		
-		$format = $this->parser->option('format');
-		if(!isset(static::$doctypes[$format]))
-			$format = 'xhtml';
+		if(!$format)
+			$format = $this->option('format');
 		
-		$remainder = trim(substr($this->content, 3));
-		
-		if(strtolower(substr($remainder, 0, 3)) == 'xml') {
-			if($format != 'xhtml')
-				$this->parent->remove_last_child();
-			else {
-				if(!($encoding = trim(substr($remainder, 3))))
-					$encoding = $this->parser->option('encoding');
-				
-				$this->content = sprintf(
-					static::$xml_declaration,
-					$this->attr('1.0'),
-					$this->attr($encoding)
-				);
-			}
-		} else {
-			if(!isset(static::$doctypes[$format][$remainder]))
-				$remainder = 'transitional';
-			$this->content = static::$doctypes[$format][$remainder];
-		}
-		
-		$this->parser->expect_indent(Parser::EXPECT_LESS | Parser::EXPECT_SAME);
+		if(isset(static::$doctypes[$format][$doctype]))
+			return static::$doctypes[$format][$doctype];
+		return false;
 		
 	}
 	
 	/**
-	 * Renders the parsed tree.
+	 * Renders the nodes content.
 	 */
-	protected function _render() {
+	public function render() {
 		
-		return $this->content;
+		if($this->encoding) {
+			if(strtolower(substr($this->option('format'), 0, 5)) != 'xhtml')
+				return '';
+			
+			$q = $this->option('attr_wrapper');
+			return sprintf(static::$xml_declaration, "{$q}1.0{$q}", "$q$this->encoding$q");
+		}
+		
+		return static::doctype($this->option('format'), $this->doctype);
 		
 	}
 	

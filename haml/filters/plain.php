@@ -6,22 +6,20 @@
 
 namespace phphaml\haml\filters;
 
-use
-	\phphaml\Node,
-	\phphaml\haml\Parser;
+use \phphaml\Node;
 
 /**
  * The plain filter simply outputs what it is given, without any additional parsing.
  */
 
-class Plain implements Filter {
+class Plain extends Filter {
 	
 	/**
 	 * Filters the given content.
 	 */
-	public static function filter(Parser $parser, Node $node, array $content) {
+	public static function filter(Node $node) {
 		
-		return $content;
+		return $node->content;
 		
 	}
 	

@@ -6,22 +6,20 @@
 
 namespace phphaml\haml\filters;
 
-use
-	\phphaml\Node,
-	\phphaml\haml\Parser;
+use \phphaml\Node;
 
 /**
  * The Escaped filter escapes any HTML entities in the block.
  */
 
-class Escaped implements Filter {
+class Escaped extends Filter {
 	
 	/**
 	 * Filters the given content.
 	 */
-	public static function filter(Parser $parser, Node $node, array $content) {
+	public static function filter(Node $node) {
 		
-		return array_map('htmlentities', $content);
+		return array_map('htmlentities', $node->content);
 		
 	}
 	

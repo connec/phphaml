@@ -8,71 +8,107 @@ namespace phphaml;
 
 /**
  * The Node class provides common functionality for generating and traversing trees.
+ * 
+ * Node trees form the high-level cacheable representation of output documents
  */
 
 abstract class Node {
 	
 	/**
-	 * The root of the tree this node is attached to.
+	 * The RootNode this node descends from.
 	 */
-	protected $parser;
+	public $root;
 	
 	/**
 	 * The parent of this node.
 	 */
-	protected $parent;
+	public $parent;
 	
 	/**
 	 * The index of this node in its parent's children.
 	 * 
 	 * This is stored to enable easily removing 
 	 */
-	protected $index = 0;
+	public $index;
 	
 	/**
 	 * The children of this node.
 	 */
-	protected $children = array();
+	public $children = array();
 	
 	/**
 	 * The line number of this node.
 	 */
-	protected $line_number = 0;
+	public $line_number = 0;
 	
 	/**
 	 * The indentation level of this node.
 	 */
-	protected $indent_level = 0;
+	public $indent_level = 0;
 	
 	/**
 	 * The content of this node.
 	 */
-	protected $content = '';
+	public $content = '';
 	
 	/**
-	 * Accessor for {$line_number}.
+	 * Instantiates and sets a node's attributes based on the given parser's current position.
 	 */
-	public function line_number() {
+	public static function new_from_parser(Parser $parser) {
 		
-		return $this->line_number;
+		$node = get_called_class();
+		$node = new $node;
+		$node->set_from_parser($parser);
+		
+		$parser->context()->add_child($node);
+		
+		return $node;
 		
 	}
 	
 	/**
-	 * Accessor for {$indent_level}.
+	 * Sets node attributes based on the parser's current position.
 	 */
-	public function indent_level() {
+	public function set_from_parser(Parser $parser) {
 		
-		return $this->indent_level;
+		$this->line_number = $parser->line_number();
+		$this->indent_level = $parser->indent_level();
+		$this->content = $parser->content();
 		
 	}
 	
 	/**
-	 * Accessor for {$content}.
+	 * Renders the content of the node.
 	 */
-	public function content() {
+	abstract public function render();
+	
+	/**
+	 * Renders any children of this node.
+	 */
+	public function render_children() {
 		
-		return $this->content;
+		$result = '';
+		foreach($this->children as $child)
+			$result .= $child->render() . ($child->append_newline ? "\n" : '');
+		return $result;
+		
+	}
+	
+	/**
+	 * Gets the value of an option.
+	 */
+	public function option($key) {
+		
+		return $this->root->option($key);
+		
+	}
+	
+	/**
+	 * Gets the indent string to use when rendering.
+	 */
+	public function indent_string() {
+		
+		return $this->root->indent_string();
 		
 	}
 	
@@ -99,10 +135,11 @@ abstract class Node {
 	 */
 	public function previous_child($context) {
 		
-		if($context->index == $this->first_child()->index)
+		end($this->children);
+		if(!prev($this->children))
 			return false;
 		
-		return $this->children[$context->index - 1];
+		return current($this->children);
 		
 	}
 	
@@ -111,10 +148,11 @@ abstract class Node {
 	 */
 	public function next_child($context) {
 		
-		if($context->index == $this->last_child()->index)
+		reset($this->children);
+		if(!next($this->children))
 			return false;
 		
-		return $this->children[$context->index + 1];
+		return current($this->children);
 		
 	}
 	
@@ -144,6 +182,10 @@ abstract class Node {
 	public function add_child(Node $child) {
 		
 		$this->children[] = $child;
+		
+		$child->root = $this->root;
+		$child->parent = $this;
+		
 		end($this->children);
 		$child->index = key($this->children);
 		
@@ -154,8 +196,20 @@ abstract class Node {
 	 */
 	public function remove_last_child() {
 		
-		end($this->children);
-		unset($this->children[key($this->children)]);
+		end($this->children)->remove();
+		
+	}
+	
+	/**
+	 * Removes this node from the tree.
+	 */
+	public function remove() {
+		
+		unset($this->parent->children[$this->index]);
+		
+		$this->root = $this;
+		$this->parent = null;
+		$this->index = 0;
 		
 	}
 	
