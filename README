@@ -1,0 +1,14 @@
+[PhpHaml]
+
+PhpHaml is a PHP library for working with HAML (and eventually SASS).
+
+	<?php
+	
+	require 'library.php';
+	
+	phphaml\Library::autoload();
+	
+	$parser = new phphaml\haml\Parser("%hello world");
+	echo $parser->render(); // <hello>world</hello>
+	
+	?>
