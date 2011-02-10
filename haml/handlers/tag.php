@@ -199,8 +199,8 @@ class Tag extends Handler {
 				$node->trim_inner = true;
 			else {
 				$node->trim_outer = true;
-				$node->append_newline = false;
-				$node->previous_sibling()->append_newline = false;
+				$node->render_newline = false;
+				$node->previous_sibling()->render_newline = false;
 			}
 		}
 		

@@ -65,7 +65,7 @@ class Parser extends \phphaml\Parser {
 		
 		$result = '';
 		foreach($this->root->children as $child)
-			$result .= $child->render() . ($child->append_newline ? "\n" : '');
+			$result .= $child->render() . ($child->render_newline ? "\n" : '');
 		return rtrim($result);
 		
 	}

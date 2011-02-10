@@ -27,8 +27,7 @@ class Text extends Node {
 	 */
 	public function render() {
 		
-		$indent = str_repeat($this->indent_string(), $this->indent_level);
-		$this->content = $indent . (string)$this->content;
+		$this->content = (string)$this->content;
 		
 		if($this->escape)
 			$this->content = htmlentities($this->content);
@@ -36,7 +35,7 @@ class Text extends Node {
 		if($this->preserve)
 			$this->preserve();
 		
-		$this->content = str_replace("\n", "\n$indent", $this->content);
+		$this->content = $this->content;
 		
 		return $this->content;
 		

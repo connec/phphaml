@@ -78,18 +78,18 @@ abstract class Node {
 	}
 	
 	/**
-	 * Renders the content of the node.
+	 * Generates PHP/HTML code for this node and its children.
 	 */
 	abstract public function render();
 	
 	/**
-	 * Renders any children of this node.
+	 * Generates PHP/HTML code for this nodes children.
 	 */
 	public function render_children() {
 		
 		$result = '';
 		foreach($this->children as $child)
-			$result .= $child->render() . ($child->append_newline ? "\n" : '');
+			$result .= $child->render() . "\n";
 		return $result;
 		
 	}

@@ -42,7 +42,6 @@ class Tag extends Node {
 	 */
 	public function render() {
 		
-		$indent = str_repeat($this->indent_string(), $this->indent_level);
 		$open_tag = '<' . $this->tag_name . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
 		$close_tag = '</' . $this->tag_name . '>';
 		
@@ -50,20 +49,21 @@ class Tag extends Node {
 			if($this->option('format') == 'xhtml')
 				$open_tag = substr($open_tag, 0, -1) . ' />';
 			
-			return $indent . $open_tag;
+			return $open_tag;
 		}
 		
 		if(empty($this->children))
-			return $indent . $open_tag . $this->content . $close_tag;
+			return $open_tag . $this->content . $close_tag;
 		
 		if($this->trim_inner) {
 			return
-				  $indent . $open_tag
+				  $open_tag
 				. ltrim(str_replace("\n" . $this->indent_string(), "\n", rtrim($this->render_children())))
 				. $close_tag;
 		}
 		
-		return $indent . $open_tag . "\n" . $this->render_children() . $indent . $close_tag;
+		$indent = str_repeat($this->indent_string(), $this->indent_level);
+		return $open_tag . "\n" . $this->render_children() . $indent . $close_tag;
 		
 	}
 	
