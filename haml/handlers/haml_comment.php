@@ -27,10 +27,6 @@ class HamlComment extends Handler {
 	
 	/**
 	 * Handles the current line in the given parser.
-	 * 
-	 * "Haml comments are ignored, so this does nothing." - this would be the ideal scenario, but
-	 * context switching in the parser needs a parent node, instead a placebo nodes\HamlComment is
-	 * used.
 	 */
 	public static function handle() {
 		

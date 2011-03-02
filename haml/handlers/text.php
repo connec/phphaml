@@ -43,7 +43,7 @@ class Text extends Handler {
 	/**
 	 * Parses the content of the node.
 	 */
-	public static function parse($node) {
+	public static function parse(nodes\Text $node) {
 		
 		if(preg_match('/^(?:(?:!|&) |(?:!|&|)(?:=|~))/', $node->content)) {
 			if($node->content[0] == '&' or $node->content[0] == '!') {

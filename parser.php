@@ -129,9 +129,9 @@ abstract class Parser {
 			throw new Exception('Sanity error: there are no handlers');
 		
 		uksort(static::$handlers, function($a, $b) {
-			if(strlen($a)  < strlen($b)) return -1;
+			if(strlen($a)  < strlen($b)) return  1;
 			if(strlen($a) == strlen($b)) return  0;
-			if(strlen($a)  > strlen($b)) return  1;
+			if(strlen($a)  > strlen($b)) return -1;
 		});
 		
 	}
@@ -420,6 +420,7 @@ abstract class Parser {
 				if(substr($this->content, 0, strlen($trigger)) == $trigger) {
 					$handled = true;
 					$handler::handle($this);
+					break;
 				}
 			}
 		}

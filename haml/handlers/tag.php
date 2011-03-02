@@ -97,7 +97,7 @@ class Tag extends Handler {
 	/**
 	 * Parses the beginning of a tag line (tag name, classes and ids).
 	 */
-	protected static function parse_start($node) {
+	protected static function parse_start(nodes\Tag $node) {
 		
 		if($node->content[0] == '%') {
 			if(!preg_match(self::RE_TAG, substr($node->content, 1), $match))
@@ -134,7 +134,7 @@ class Tag extends Handler {
 	/**
 	 * Parses HTML attributes from the content.
 	 */
-	protected static function parse_html_attributes($node) {
+	protected static function parse_html_attributes(nodes\Tag $node) {
 		
 		if($node->content[0] == '(') {
 			$html_attributes = static::extract_balanced($node, '(', ')');
@@ -176,7 +176,7 @@ class Tag extends Handler {
 	/**
 	 * Parses Ruby style attributes from the content.
 	 */
-	protected static function parse_ruby_attributes($node) {
+	protected static function parse_ruby_attributes(nodes\Tag $node) {
 		
 		if($node->content[0] == '{') {
 			$ruby_attributes = static::extract_balanced($node, '{', '}');
@@ -201,7 +201,7 @@ class Tag extends Handler {
 	/**
 	 * Parses the end of a tag line (self-closing, content) and sets up the parser for the next line.
 	 */
-	protected static function parse_end($node) {
+	protected static function parse_end(nodes\Tag $node) {
 		
 		while(($token = $node->content[0]) == '<' or $node->content[0] == '>') {
 			$node->content = substr($node->content, 1);
@@ -247,7 +247,7 @@ class Tag extends Handler {
 	/**
 	 * Extracts a balanced substring from the line.
 	 */
-	protected static function extract_balanced($node, $open, $close) {
+	protected static function extract_balanced(nodes\Tag $node, $open, $close) {
 		
 		if($node->content[0] != $open)
 			$node->exception('Sanity error: content does not begin with $open');
