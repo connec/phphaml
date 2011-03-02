@@ -24,25 +24,25 @@ class HtmlComment extends Node {
 	 */
 	public function render() {
 		
-		$return = $this->indent() . '<!--';
+	  $newline = '<?php echo "\n"; ?>';
+	  
+		$return = '<!--';
 		
 		if($this->conditional) {
-			return array(
-			  $return . $this->content . '>',
-			  $this->render_children(),
-			  $this->indent() . '<![endif]-->'
-			);
+			return
+			    $return . $this->content . '>' . $newline
+			  . $this->render_children() . $newline
+			  . $this->indent() . '<![endif]-->';
 		} else {
 			if(empty($this->children)) {
 			  $this->content = ruby\InterpolatedString::compile($this->content);
-				return array($return . ' <?php echo (' . $this->content . '); ?> -->');
+				return $return . ' <?php echo (' . $this->content . '); ?> -->';
 			}
 			else {
-				return array(
-				  $return,
-				  $this->render_children(),
-				  $this->indent() . '-->'
-				);
+				return
+				    $return . $newline
+				  . $this->render_children() . $newline
+  				. $this->indent() . '-->';
 			}
 		}
 		

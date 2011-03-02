@@ -39,7 +39,7 @@ class Text extends Node {
 		
 		$this->content = '<?php echo (' . ruby\InterpolatedString::compile($this->content) . '); ?>';
 		
-		return array($this->indent() . $this->content);
+		return $this->content;
 		
 	}
 	
@@ -48,8 +48,7 @@ class Text extends Node {
 	 */
 	public function __toString() {
 		
-	  $render = $this->render();
-		return $render[0];
+	  return $this->render();
 		
 	}
 	

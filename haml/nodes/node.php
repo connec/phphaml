@@ -14,6 +14,17 @@ use \phphaml\haml\Line;
 
 class Node extends \phphaml\Node {
 	
+  /**
+   * Indicates that a newline should be printed after this node's content.
+   */
+  public $render_newline = true;
+  
+  /**
+   * Indicates that an indentation string should be printed before this node's
+   * content.
+   */
+  public $render_indent = true;
+  
 	/**
 	 * Generates PHP/HTML code for this node and its children.
 	 */
@@ -30,10 +41,15 @@ class Node extends \phphaml\Node {
 		
 	  $newline = '<?php echo "\n"; ?>';
 	  
-	  $result = array();
-		foreach($this->children as $i => $child)
-			$result = array_merge($result, $child->render());
-		return implode($newline, $result);
+	  $result = '';
+		foreach($this->children as $i => $child) {
+		  if($child->render_indent)
+		    $result .= $child->indent();
+	    $result .= $child->render();
+	    if($child->render_newline and $i + 1 != count($this->children))
+	      $result .= $newline;
+		}
+		return $result;
 		
 	}
 }

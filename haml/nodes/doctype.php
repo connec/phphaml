@@ -72,10 +72,10 @@ class Doctype extends Node {
 		
 		if($this->encoding) {
 			$q = $this->option('attr_wrapper');
-			return array(sprintf(static::$xml_declaration, "{$q}1.0{$q}", "$q$this->encoding$q"));
+			return sprintf(static::$xml_declaration, $q . '1.0' . $q, $q . $this->encoding . $q);
 		}
 		
-		return array(static::doctype($this->option('format'), $this->doctype));
+		return static::doctype($this->option('format'), $this->doctype);
 		
 	}
 	

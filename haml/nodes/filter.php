@@ -35,7 +35,7 @@ class Filter extends Node {
 		if(is_array($filtered))
 		  $filtered = implode('#{"\n"}' . $this->indent(), $filtered);
 		
-		return array('<?php echo (' . ruby\InterpolatedString::compile($filtered) . '); ?>');
+		return '<?php echo (' . ruby\InterpolatedString::compile($filtered) . '); ?>';
 		
 	}
 	

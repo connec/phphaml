@@ -208,8 +208,11 @@ class Tag extends Handler {
 			
 			if($token == '<')
 				$node->trim_inner = true;
-			else
-				$node->trim_outer = true;
+			else {
+			  $node->trim_outer = true;
+			  $node->render_newline = false;
+			  $node->previous_sibling()->render_newline = false;
+			}
 		}
 		
 		if(in_array($node->tag_name, static::$parser->option('preserve')))
