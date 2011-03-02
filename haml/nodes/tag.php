@@ -42,28 +42,36 @@ class Tag extends Node {
 	 */
 	public function render() {
 		
-		$open_tag = '<' . $this->tag_name . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
+	  $open_tag = '<' . $this->tag_name . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
 		$close_tag = '</' . $this->tag_name . '>';
 		
 		if($this->self_closing) {
 			if($this->option('format') == 'xhtml')
 				$open_tag = substr($open_tag, 0, -1) . ' />';
 			
-			return $open_tag;
+			return array($this->indent() . $open_tag);
 		}
 		
-		if(empty($this->children))
-			return $open_tag . $this->content . $close_tag;
+		if(empty($this->children)) {
+			return array(
+			  $this->indent() . $open_tag . $this->content . $close_tag
+			);
+		}
 		
 		if($this->trim_inner) {
-			return
-				  $open_tag
-				. ltrim(str_replace("\n" . $this->indent_string(), "\n", rtrim($this->render_children())))
-				. $close_tag;
+			foreach($this->children as $child)
+			  $child->indent_level --;
+		  $this->children[0]->indent_level = 0;
+		  return array(
+		    $this->indent() . $open_tag . $this->render_children() . $close_tag
+    	);
 		}
 		
-		$indent = str_repeat($this->indent_string(), $this->indent_level);
-		return $open_tag . "\n" . $this->render_children() . $indent . $close_tag;
+		return array(
+		  $this->indent() . $open_tag,
+		  $this->render_children(),
+		  $this->indent() . $close_tag
+		);
 		
 	}
 	
@@ -72,53 +80,37 @@ class Tag extends Node {
 	 */
 	protected function render_attributes() {
 		
-		$attributes = array();
-		$class = array();
-		$id = array();
-		
-		$q = $this->option('attr_wrapper');
-		
-		foreach($this->attributes as $attribute) {
-			list($key, $value) = $attribute;
-			$key = (string)$key;
-			
-			if(empty($value))
-				continue;
-			
-			if($key == 'class') {
-				if(is_array($value)) {
-					foreach($value as $_value)
-						$class[] = (string)$_value;
-				} else
-					$class[] = (string)$value;
-			} elseif($key == 'id') {
-				if(is_array($value)) {
-					foreach($value as $_value)
-						$id[] = (string)$_value;
-				} else
-					$id[] = (string)$value;
-			} else {
-				$value = (string)$value;
-				if($value == "1") {
-					if(substr($this->option('format'), 0, 4) == 'html')
-						$attributes[] = $key;
-					else
-						$attributes[] = $key . '=' . $q . $key . $q;
-				} else
-					$attributes[] = $key . '=' . $q . $value . $q;
-			}
-		}
-		
-		if(!empty($class)) {
-			natcasesort($class);
-			$attributes[] = 'class=' . $q . implode(' ', $class) . $q;
-		}
-		
-		if(!empty($id))
-			$attributes[] = 'id=' . $q . implode('_', $id) . $q;
-		
-		natcasesort($attributes);
-		return implode(' ', $attributes);
+	  $attributes = 'array(';
+	  foreach($this->attributes as $attribute => $value) {
+	    if(is_int($attribute)) {
+	      if(is_array($value[1])) {
+	        $_value = 'array(';
+	        foreach($value[1] as $__value)
+	          $_value .= $__value . ',';
+          $value[1] = $_value . ')';
+	      }
+	      $value = 'array(' . $value[0] . ',' . $value[1] . ')';
+	    } else
+	      $attribute = var_export($attribute, true);
+	    
+	    $attributes .= $attribute . '=>';
+	    
+	    if(is_array($value)) {
+	      $attributes .= 'array(';
+	      foreach($value as $_value)
+	        $attributes .= $_value . ',';
+        $attributes .= ')';
+	    } else
+	      $attributes .= $value;
+      
+      $attributes .= ',';
+	  }
+	  $attributes .= ')';
+	  
+	  return '<?php $__generate_attributes('
+	    . var_export($this->option('format'), true) . ','
+	    . var_export($this->option('attr_wrapper'), true) . ','
+  	  . $attributes . '); ?>';
 		
 	}
 	

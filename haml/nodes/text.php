@@ -6,6 +6,8 @@
 
 namespace phphaml\haml\nodes;
 
+use \phphaml\haml\ruby;
+
 /**
  * The Text node represents a line of text in a HAML document.
  */
@@ -35,9 +37,9 @@ class Text extends Node {
 		if($this->preserve)
 			$this->preserve();
 		
-		$this->content = $this->content;
+		$this->content = '<?php echo (' . ruby\InterpolatedString::compile($this->content) . '); ?>';
 		
-		return $this->content;
+		return array($this->indent() . $this->content);
 		
 	}
 	
@@ -46,7 +48,8 @@ class Text extends Node {
 	 */
 	public function __toString() {
 		
-		return $this->render();
+	  $render = $this->render();
+		return $render[0];
 		
 	}
 	
@@ -55,12 +58,12 @@ class Text extends Node {
 	 */
 	protected function preserve() {
 		
-		$re = '/<(' . implode('|', $this->option('preserve')) . ")>.*?\n.*?<\/\\1>/i";
+		$re = '/<(' . implode('|', $this->option('preserve')) . ")>.*?\\\\n.*?<\/\\1>/i";
 		
 		while(preg_match($re, $this->content, $match, PREG_OFFSET_CAPTURE)) {
 			$this->content = substr_replace(
 				$this->content,
-				str_replace("\n", '&#x000A;', $match[0][0]),
+				str_replace('\n', '&#x000A;', $match[0][0]),
 				$match[0][1],
 				strlen($match[0][0])
 			);

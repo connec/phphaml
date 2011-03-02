@@ -1,21 +1,22 @@
 <?php
 
 /**
- * ruby_list.php
+ * list.php
  */
 
 namespace phphaml\haml\ruby;
 
 use
 	\phphaml\Exception,
-	\phphaml\Node;
+	\phphaml\Node,
+	\phphaml\haml\ruby;
 
 /**
- * The RubyList class provides the base for RubyHash and RubyArray classes
+ * The List class provides the base for RubyHash and RubyArray classes
  * to extend from.
  */
 
-abstract class RubyList {
+abstract class RList {
 	
 	/**
 	 * The type of this list.
@@ -152,15 +153,19 @@ abstract class RubyList {
 		
 		switch($value[0]) {
 			case '[':
-				$value = new RubyArray($value, $this->node);
+				$value = new ruby\RArray($value, $this->node);
 				$value = $value->to_a();
 			break;
 			case '{':
-				$value = new RubyHash($value, $this->node);
+				$value = new ruby\Hash($value, $this->node);
 				$value = $value->to_a();
 			break;
-			default:
-				$value = new RubyValue($value, $this->node);
+			case '"':
+			  $value = ruby\InterpolatedString::compile($value);
+		  break;
+		  case ':':
+		    $value = var_export(substr($value, 1), true);
+	    break;
 		}
 		
 		return $value;

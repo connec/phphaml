@@ -39,7 +39,7 @@ class Doctype extends Node {
 	/**
 	 * The formatting string for an XML declaration.
 	 */
-	protected static $xml_declaration = '<?xml version=%s encoding=%s ?>';
+	protected static $xml_declaration = '<?php echo \'<\'; ?>?xml version=%s encoding=%s ?>';
 	
 	/**
 	 * The encoding to use in the xml declaration or false if this is a doctype.
@@ -71,14 +71,11 @@ class Doctype extends Node {
 	public function render() {
 		
 		if($this->encoding) {
-			if(strtolower(substr($this->option('format'), 0, 5)) != 'xhtml')
-				return '';
-			
 			$q = $this->option('attr_wrapper');
-			return sprintf(static::$xml_declaration, "{$q}1.0{$q}", "$q$this->encoding$q");
+			return array(sprintf(static::$xml_declaration, "{$q}1.0{$q}", "$q$this->encoding$q"));
 		}
 		
-		return static::doctype($this->option('format'), $this->doctype);
+		return array(static::doctype($this->option('format'), $this->doctype));
 		
 	}
 	

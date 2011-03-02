@@ -19,7 +19,7 @@ class Preserve extends Filter {
 	 */
 	public static function filter(Node $node) {
 		
-		return implode('&#x000A;', $node->content);
+	  return implode('&#x000A;', $node->content);
 		
 	}
 	

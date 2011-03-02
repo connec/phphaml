@@ -6,6 +6,8 @@
 
 namespace phphaml\haml\nodes;
 
+use \phphaml\haml\ruby;
+
 /**
  * The HtmlComment node represents an HTML comment in the parse tree.
  */
@@ -22,17 +24,26 @@ class HtmlComment extends Node {
 	 */
 	public function render() {
 		
-		$indent = str_repeat($this->indent_string(), $this->indent_level);
+		$return = $this->indent() . '<!--';
 		
-		$return = $indent . '<!--';
-		
-		if($this->conditional)
-			return $return . $this->content . ">\n" . $this->render_children() . $indent . '<![endif]-->';
-		else {
-			if(empty($this->children))
-				return $return . ' ' . $this->content . " -->\n";
-			else
-				return $return . "\n" . $this->render_children() . $indent . '-->';
+		if($this->conditional) {
+			return array(
+			  $return . $this->content . '>',
+			  $this->render_children(),
+			  $this->indent() . '<![endif]-->'
+			);
+		} else {
+			if(empty($this->children)) {
+			  $this->content = ruby\InterpolatedString::compile($this->content);
+				return array($return . ' <?php echo (' . $this->content . '); ?> -->');
+			}
+			else {
+				return array(
+				  $return,
+				  $this->render_children(),
+				  $this->indent() . '-->'
+				);
+			}
 		}
 		
 	}

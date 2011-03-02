@@ -8,9 +8,9 @@ namespace phphaml\haml\handlers;
 
 use
 	\phphaml\Handler,
-	\phphaml\haml\InterpolatedString,
 	\phphaml\haml\nodes,
-	\phphaml\haml\Parser;
+	\phphaml\haml\Parser,
+	\phphaml\haml\ruby;
 
 /**
  * The Text handler handles text lines in a HAML source.
@@ -60,8 +60,6 @@ class Text extends Handler {
 		
 		if($node->escape === null)
 			$node->escape = static::$parser->option('escape_html');
-		
-		$node->content = new InterpolatedString($node->content, $node);
 		
 	}
 	

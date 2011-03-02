@@ -6,7 +6,7 @@
 
 namespace phphaml\haml\nodes;
 
-use \phphaml\haml\InterpolatedString;
+use \phphaml\haml\ruby;
 
 /**
  * The Filter node represents filtered content in the parse tree.
@@ -28,14 +28,14 @@ class Filter extends Node {
 	 * Renders the parsed tree.
 	 */
 	public function render() {
-		
+	  
 		$filter = $this->filter;
 		$filtered = $filter::filter($this);
 		
 		if(is_array($filtered))
-			$filtered = implode("\n", $filtered);
+		  $filtered = implode('#{"\n"}' . $this->indent(), $filtered);
 		
-		return new InterpolatedString($filtered, $this);
+		return array('<?php echo (' . ruby\InterpolatedString::compile($filtered) . '); ?>');
 		
 	}
 	

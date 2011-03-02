@@ -1,16 +1,18 @@
 <?php
 
 /**
- * ruby_array.php
+ * array.php
  */
 
 namespace phphaml\haml\ruby;
 
+use \phphaml\haml\ruby;
+
 /**
- * The RubyList class parses a ruby list (as a string).
+ * The List class parses a ruby list (as a string).
  */
 
-class RubyArray extends RubyList {
+class RArray extends ruby\RList {
 	
 	/**
 	 * The type of this list.

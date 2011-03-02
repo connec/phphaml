@@ -10,9 +10,8 @@ use
 	\phphaml\Handler,
 	\phphaml\haml\nodes,
 	\phphaml\haml\Parser,
-	\phphaml\haml\Value,
-	\phphaml\haml\ruby\RubyHash,
-	\phphaml\haml\ruby\RubyValue;
+	\phphaml\haml\PhpValue,
+	\phphaml\haml\ruby;
 
 /**
  * The Tag handler handles tag nodes in a HAML source.
@@ -120,14 +119,13 @@ class Tag extends Handler {
 			
 			$node->content = substr($node->content, strlen($match[0]) + 1);
 			
-			if($type == 'class')
-				$node->attributes[] = array($type, $match[0]);
-			else
-				$id = $match[0];
+			if($type == 'class') {
+			  if(!isset($node->attributes[$type]))
+			    $node->attributes[$type] = array();
+				$node->attributes[$type][] = '\'' . $match[0] . '\'';
+			} else
+				$node->attributes[$type] = array('\'' . $match[0] . '\'');
 		}
-		
-		if(isset($id))
-			$node->attributes[] = array('id', $id);
 		
 		static::parse_html_attributes($node);
 		
@@ -152,7 +150,20 @@ class Tag extends Handler {
 				if(count($parts) != 2)
 					$node->exception('Parse error: bad html attribute syntax');
 				
-				$node->attributes[] = array($parts[0], new Value($parts[1], $node));
+				if($parts[1][0] == '"')
+				  $parts[1] = ruby\InterpolatedString::compile($parts[1]);
+				
+				if($parts[0] == 'class') {
+				  if(!isset($node->attributes[$parts[0]]))
+				    $node->attributes[$parts[0]] = array();
+			    $node->attributes[$parts[0]][] = $parts[1];
+				} elseif($parts[0] == 'id') {
+				  if(!isset($node->attributes[$parts[0]]))
+				    $node->attributes[$parts[0]] = array($parts[1]);
+				  else
+			      $node->attributes[$parts[0]][1] = $parts[1];
+				} else
+				  $node->attributes[$parts[0]] = $parts[1];
 			}
 			
 			$node->content = substr($node->content, strlen($html_attributes) + 2);
@@ -179,7 +190,7 @@ class Tag extends Handler {
 			}
 			
 			$node->content = substr($node->content, strlen($ruby_attributes) + 2);
-			$ruby_attributes = new RubyHash('{' . $ruby_attributes . '}', $node);
+			$ruby_attributes = new ruby\Hash('{' . $ruby_attributes . '}', $node);
 			$node->attributes = array_merge($node->attributes, $ruby_attributes->to_a());
 		}
 		
@@ -197,11 +208,8 @@ class Tag extends Handler {
 			
 			if($token == '<')
 				$node->trim_inner = true;
-			else {
+			else
 				$node->trim_outer = true;
-				$node->render_newline = false;
-				$node->previous_sibling()->render_newline = false;
-			}
 		}
 		
 		if(in_array($node->tag_name, static::$parser->option('preserve')))
@@ -218,10 +226,11 @@ class Tag extends Handler {
 		
 		if($node->content = trim($node->content)) {
 			$text_node = new nodes\Text();
+			$text_node->set_from_parser(static::$parser);
 			$text_node->root = $node->root;
 			$text_node->parent = $node;
+			$text_node->indent_level = 0;
 			$text_node->content = $node->content;
-			$text_node->line_number = $node->line_number;
 			Text::parse($text_node);
 			
 			$node->content = $text_node;

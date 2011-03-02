@@ -31,12 +31,14 @@ class Doctype extends Handler {
 	 */
 	public static function handle() {
 		
-		$node = nodes\Doctype::new_from_parser(static::$parser);
+	  $node = nodes\Doctype::new_from_parser(static::$parser);
 		
 		$content = trim(substr($node->content, 3));
 		
 		if(strtolower(substr($content, 0, 3)) == 'xml') {
-			if(!($encoding = trim(substr($content, 3))))
+		  if(static::$parser->option('format') != 'xhtml')
+		    $node->remove();
+			elseif(!($encoding = trim(substr($content, 3))))
 				$node->encoding = static::$parser->option('encoding');
 		} else {
 			$node->doctype = $content;

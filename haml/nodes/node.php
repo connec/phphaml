@@ -6,36 +6,34 @@
 
 namespace phphaml\haml\nodes;
 
+use \phphaml\haml\Line;
+
 /**
  * This Node class extends the base Node class with HAML specific stuff.
  */
 
-abstract class Node extends \phphaml\Node {
+class Node extends \phphaml\Node {
 	
 	/**
-	 * Indicates whether or not indentation should be rendered before this node.
+	 * Generates PHP/HTML code for this node and its children.
 	 */
-	public $render_indent = true;
-	
-	/**
-	 * Indicates whether or not a newline should be rendered after this node.
-	 */
-	public $render_newline = true;
+	public function render() {
+	  
+	  return $this->render_children();
+	  
+	}
 	
 	/**
 	 * Generates PHP/HTML code for this nodes children.
 	 */
 	public function render_children() {
 		
-		$result = '';
-		foreach($this->children as $child) {
-			$indent = str_repeat($child->indent_string(), $child->indent_level);
-			$result .=
-			  	($child->render_indent ? $indent : '')
-				. $child->render()
-				. ($child->render_newline ? "\n" : '');
-		}
-		return $result;
+	  $newline = '<?php echo "\n"; ?>';
+	  
+	  $result = array();
+		foreach($this->children as $i => $child)
+			$result = array_merge($result, $child->render());
+		return implode($newline, $result);
 		
 	}
 }

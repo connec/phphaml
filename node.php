@@ -14,6 +14,11 @@ namespace phphaml;
 
 abstract class Node {
 	
+  /**
+   * The parser this node is attached to.
+   */
+  protected $parser;
+  
 	/**
 	 * The RootNode this node descends from.
 	 */
@@ -71,6 +76,7 @@ abstract class Node {
 	 */
 	public function set_from_parser(Parser $parser) {
 		
+	  $this->parser = $parser;
 		$this->line_number = $parser->line_number();
 		$this->indent_level = $parser->indent_level();
 		$this->content = $parser->content();
@@ -85,30 +91,37 @@ abstract class Node {
 	/**
 	 * Generates PHP/HTML code for this nodes children.
 	 */
-	public function render_children() {
-		
-		$result = '';
-		foreach($this->children as $child)
-			$result .= $child->render() . "\n";
-		return $result;
-		
-	}
+	abstract public function render_children();
 	
 	/**
 	 * Gets the value of an option.
 	 */
 	public function option($key) {
 		
-		return $this->root->option($key);
+		return $this->parser->option($key);
 		
+	}
+	
+	/**
+	 * Gets a single indent unit.
+	 */
+	public function indent_string() {
+	  
+	  return $this->parser->indent_string();
+	  
 	}
 	
 	/**
 	 * Gets the indent string to use when rendering.
 	 */
-	public function indent_string() {
+	public function indent() {
 		
-		return $this->root->indent_string();
+	  static $indent_cache = array();
+	  
+		if(!isset($indent_cache[$this->indent_level]))
+		  $indent_cache[$this->indent_level] = str_repeat($this->parser->indent_string(), $this->indent_level);
+	  
+	  return $indent_cache[$this->indent_level];
 		
 	}
 	
@@ -211,6 +224,22 @@ abstract class Node {
 		$this->parent = null;
 		$this->index = 0;
 		
+	}
+	
+	/**
+	 * Gets a light representation of the tree.
+	 */
+	public function light() {
+	  
+	  $node = new \StdClass;
+	  $node->type = get_called_class();
+	  $node->children = array();
+	  
+	  foreach($this->children as $child)
+	    $node->children[] = $child->light();
+    
+    return $node;
+	  
 	}
 	
 	/**

@@ -22,19 +22,17 @@ class Css extends Filter {
 		foreach($node->content as &$line)
 			$line = str_repeat($node->indent_string(), 2) . $line;
 		
-		$indent = str_repeat($node->indent_string(), $node->indent_level);
-		
 		$q = $node->option('attr_wrapper');
 		array_unshift(
 			$node->content,
-			$indent . "<style type={$q}text/css{$q}>",
-			$indent . $node->indent_string() . '/*<![CDATA[*' . '/'
+			$node->indent() . "<style type={$q}text/css{$q}>",
+			$node->indent() . $node->indent_string() . '/*<![CDATA[*' . '/'
 		);
 		
 		array_push(
 			$node->content,
-			$indent . $node->indent_string() . '/*]]>*/',
-			$indent . '</style>'
+			$node->indent() . $node->indent_string() . '/*]]>*/',
+			$node->indent() . '</style>'
 		);
 		
 		return $node->content;

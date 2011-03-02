@@ -1,16 +1,18 @@
 <?php
 
 /**
- * ruby_hash.php
+ * hash.php
  */
 
 namespace phphaml\haml\ruby;
 
+use \phphaml\haml\ruby;
+
 /**
- * The RubyHash class parses a ruby hash (as a string).
+ * The Hash class parses a ruby hash (as a string).
  */
 
-class RubyHash extends RubyList {
+class Hash extends ruby\RList {
 	
 	/**
 	 * The type of this list.
@@ -38,7 +40,7 @@ class RubyHash extends RubyList {
 			$this->node->exception('Invalid syntax: expected "=>" in hash entry');
 		list($key, $value) = $entry;
 		
-		$this->parsed[] = array(new RubyValue($key, $this->node), $this->handle_value($value));
+		$this->parsed[] = array($this->handle_value($key), $this->handle_value($value));
 		
 	}
 	

@@ -97,6 +97,11 @@ abstract class Parser {
 	protected $force_handler = false;
 	
 	/**
+	 * When !== false, the context will not change.
+	 */
+	protected $context_locked = false;
+	
+	/**
 	 * Finds handlers in this Parser's directory.
 	 */
 	protected static function find_handlers() {
@@ -231,6 +236,16 @@ abstract class Parser {
 	}
 	
 	/**
+	 * Locks the context so that it will not change until the indent level is
+	 * next equal to the current indent level.
+	 */
+	public function lock_context() {
+	  
+	  $this->context_locked = $this->indent_level;
+	  
+	}
+	
+	/**
 	 * Initialises the parser with given source and options.
 	 */
 	public function __construct($source, array $options = array()) {
@@ -262,15 +277,20 @@ abstract class Parser {
 	 */
 	public function parse() {
 		
-		foreach(static::$handlers as $handler)
-			$handler::reset();
 		Handler::set_parser($this);
 		
-		$this->root = new RootNode($this);
+		$node_namespace = Library::namespace_from_class(get_called_class()) . '\\' . 'nodes';
+		$root_class = $node_namespace . '\\Node';
+		$this->root = new $root_class;
+		$this->root->set_from_parser($this);
+		
 		$this->context = $this->root;
 		
 		$this->line_number = 0;
 		$this->indent_level = 0;
+		
+		$this->force_handler = false;
+		$this->context_locked = false;
 		
 		while(($this->content = $this->get_line()) !== false) {
 			$this->line_number ++;
@@ -281,22 +301,15 @@ abstract class Parser {
 				$this->handle();
 		}
 		
+		foreach(static::$handlers as $handler)
+			$handler::reset();
+		
 	}
 	
 	/**
 	 * Renders the parsed tree.
 	 */
-	public function render() {
-		
-		if(!$this->line_number)
-			$this->parse();
-		
-		$result = '';
-		foreach($this->children as $child)
-			$result .= $child->render() . "\n";
-		return rtrim($result);
-		
-	}
+	abstract public function render();
 	
 	/**
 	 * Gets a line from the source.
@@ -350,30 +363,37 @@ abstract class Parser {
 		} else {
 			$indent_level = 0;
 		}
-
-		if($indent_level < $this->indent_level) {
-			if(!($this->expect_indent & self::EXPECT_LESS))
-				$this->exception('Parse error: unexpected indentation decrease');
-
-			$difference = $this->indent_level - $indent_level;
-			while($difference--)
-				$this->context = $this->context->parent;
-		}
-
-		if($indent_level == $this->indent_level) {
-			if(!($this->expect_indent & self::EXPECT_SAME))
-				$this->exception('Parse error: expected indentation change');
-		}
-
-		if($indent_level > $this->indent_level) {
-			if(!($this->expect_indent & self::EXPECT_MORE))
-				$this->exception('Parse error: unexpected indentation increase');
-			if($indent_level - $this->indent_level > 1)
-				$this->exception('Parse error: indent increased by more than 1');
-			if(empty($this->context->children))
-				$this->exception('Parse error: indent increased without parent node');
-
-			$this->context = end($this->context->children);
+		
+		if($this->context_locked !== false) {
+		  if($indent_level == $this->context_locked) {
+		    $this->force_handler = false;
+		    $this->context_locked = false;
+	    }
+  	} else {
+  		if($indent_level < $this->indent_level) {
+  			if(!($this->expect_indent & self::EXPECT_LESS))
+  				$this->exception('Parse error: unexpected indentation decrease');
+  
+  			$difference = $this->indent_level - $indent_level;
+  			while($difference--)
+  				$this->context = $this->context->parent;
+  		}
+  
+  		if($indent_level == $this->indent_level) {
+  			if(!($this->expect_indent & self::EXPECT_SAME))
+  				$this->exception('Parse error: expected indentation change');
+  		}
+  
+  		if($indent_level > $this->indent_level) {
+  			if(!($this->expect_indent & self::EXPECT_MORE))
+  				$this->exception('Parse error: unexpected indentation increase');
+  			if($indent_level - $this->indent_level > 1)
+  				$this->exception('Parse error: indent increased by more than 1');
+  			if(empty($this->context->children))
+  				$this->exception('Parse error: indent increased without parent node');
+        
+  			$this->context = end($this->context->children);
+  		}
 		}
 
 		$this->indent_level = $indent_level;

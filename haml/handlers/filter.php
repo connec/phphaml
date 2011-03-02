@@ -19,13 +19,6 @@ use
 class Filter extends Handler {
 	
 	/**
-	 * The namespace filters reside in.
-	 * 
-	 * By default this will be the filter subnamespace of this namespace.
-	 */
-	protected static $filter_namespace;
-	
-	/**
 	 * The start-of-line trigger for this handler.
 	 * 
 	 * Note: line handling is ordered by the length of the trigger.
@@ -33,6 +26,13 @@ class Filter extends Handler {
 	 * parser (where more than one is defined, which one is chosen is undefined).
 	 */
 	protected static $trigger = array(':');
+	
+	/**
+	 * The namespace filters reside in.
+	 * 
+	 * By default this will be the filter subnamespace of this namespace.
+	 */
+	protected static $filter_namespace;
 	
 	/**
 	 * Represents the indent level this filter began on.
@@ -55,7 +55,6 @@ class Filter extends Handler {
 		
 		if(static::$indent_level === false) {
 			$node = nodes\Filter::new_from_parser(static::$parser);
-			$node->children[] = $node;
 			
 			$node->filter = 
 				  static::$filter_namespace . '\\'
@@ -67,17 +66,26 @@ class Filter extends Handler {
 			$node->content = array();
 			
 			static::$indent_level = static::$parser->indent_level();
-		} elseif(static::$indent_level === static::$parser->indent_level()) {
-			static::$indent_level = false;
-			return static::$parser->handle();
+			static::$parser->lock_context();
 		} else {
 			$indent_level = static::$parser->indent_level() - static::$indent_level - 1;
 			$indent = str_repeat(static::$parser->indent_string(), $indent_level);
-			static::$parser->context()->content[] = $indent . static::$parser->content();
+			
+			static::$parser->context()->last_child()->content[] = $indent . static::$parser->content();
 		}
 		
 		static::$parser->force_handler(get_called_class());
 		
+	}
+	
+	/**
+	 * Resets any static properties once parsing is complete.
+	 */
+	public static function reset() {
+	  
+	  static::$indent_level = false;
+	  parent::reset();
+	  
 	}
 	
 }

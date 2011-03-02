@@ -12,3 +12,25 @@ PhpHaml is a PHP library for working with HAML (and eventually SASS).
 	echo $parser->render(); // <hello>world</hello>
 	
 	?>
+
+[Library Structure]
+
+The library was designed to be highly modular, as such there are 3 types of
+component involved in parsing a document:
+
+  - Parsers:
+    Parsers are the most general component.  All they do, really, is traverse
+    the source line-by-line, handle context switching (indentation) and then
+    delegate the line to the appropriate Handler.
+  
+  - Handlers:
+    Handlers perform the majority of the parsing.  They extract information from
+    the source line and generate nodes in the AST.  As much processing as
+    possible should be done in the handlers to minimise the processing that
+    needs done by the AST.
+  
+  - Nodes:
+    Unsurprisingly, Nodes are used as nodes in the abstract syntax tree.  They
+    contain all the information, parsed by the Handlers, to render the document
+    without any additional info from outside the AST, which allows the AST to be
+    cached.
