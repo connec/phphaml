@@ -4,11 +4,14 @@
 	"xml:lang" => "en", :lang => "en"}
 	
 	%head
+		- $title = "title"
 		%title= $title
 	
 	%body
 		#wrapper
+			- $table = "table"
 			%table{:id => $table}
+				- $rows = array()
 				- foreach($rows as $row)
 					%tr
 						- foreach($row as $k => $v)

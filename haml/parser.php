@@ -124,7 +124,6 @@ HEADER;
 			$this->parse();
 		
 		$result = $this->root->render_children();
-		var_dump($result);
 		$result = static::$header . $result;
 		
 		ob_start();

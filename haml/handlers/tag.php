@@ -99,9 +99,13 @@ class Tag extends Handler {
 	 */
 	protected static function parse_start(nodes\Tag $node) {
 		
+	  $text_handler = '\phphaml\haml\handlers\Text';
+	  
 		if($node->content[0] == '%') {
-			if(!preg_match(self::RE_TAG, substr($node->content, 1), $match))
-				$node->exception('Parse error: invalid tag name');
+			if(!preg_match(self::RE_TAG, substr($node->content, 1), $match)) {
+			  static::$parser->force_handler($text_handler);
+			  return static::$parser->handle();
+			}
 			
 			$node->content = substr($node->content, strlen($match[0]) + 1);
 			$node->tag_name = $match[0];
@@ -111,10 +115,8 @@ class Tag extends Handler {
 			$type = $node->content[0] == '.' ? 'class' : 'id';
 			
 			if(!preg_match($type == 'id' ? self::RE_ID : self::RE_CLASS, substr($node->content, 1), $match)) {
-				$node->exception(
-					'Parse error: invalid :type',
-					array('type' => $type == 'id' ? 'id' : 'class name')
-				);
+			  static::$parser->force_handler($text_handler);
+			  return static::$parser->handle();
 			}
 			
 			$node->content = substr($node->content, strlen($match[0]) + 1);
