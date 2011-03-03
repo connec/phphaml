@@ -300,7 +300,7 @@ class Tag extends Handler {
 	/**
 	 * Explodes a string by another string, given that the string isn't in a quote.
 	 */
-	protected static function quote_safe_explode($delimeter, $string) {
+	public static function quote_safe_explode($delimeter, $string) {
 		
 		$result = array();
 		

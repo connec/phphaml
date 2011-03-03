@@ -623,6 +623,52 @@
   	"a PHP variable assignment and display" : {
   		"haml" : "- $var = 'hello'\n= $var",
   		"html" : "hello"
+  	},
+  	
+  	"a PHP variable assignment and if statement" : {
+  	  "haml" : "- $var = true\n- if($var)\n  true",
+  	  "html" : "true"
+  	},
+  	
+  	"a PHP if/else statement" : {
+  	  "haml" : "- if(false)\n  false\n- else\n  true",
+  	  "html" : "true"
+  	},
+  	
+  	"a PHP if/elseif/else statement" : {
+  	  "haml" : "- $var = 5\n- if($var > 5)\n  >5\n- elseif($var == 5)\n  5\n- else\n  <5",
+  	  "html" : "5"
+  	},
+  	
+  	"a PHP while loop" : {
+  	  "haml" : "- $i = 0\n- while $i < 5\n  = ++ $i",
+  	  "html" : "1\n2\n3\n4\n5"
+  	},
+  	
+  	"a PHP foreach loop" : {
+  	  "haml" : "- foreach $a as $_a\n  = $_a",
+  	  "html" : "1\n2\n3",
+  	  "locals" : {
+  	    "a" : ["1", "2", "3"]
+  	  }
+  	},
+  	
+  	"a phphaml foreach/else loop" : {
+  	  "haml" : "- foreach $a as $_a\n  = $_a\n- else\n  empty",
+  	  "html" : "empty",
+  	  "locals" : {
+  	    "a" : []
+  	  }
+  	},
+  	
+  	"a PHP switch statement" : {
+  	  "haml" : "- switch(true)\n  - case 1 == 2\n    nope\n  - case 1 == 1\n    yes",
+  	  "html" : "yes"
+  	},
+  	
+  	"another PHP switch statement" : {
+  	  "haml" : "- switch(true)\n  - case 2 > 1\n    nope\n  - break\n  - case 4 > 3\n    yes\n  - break",
+  	  "html" : "nope"
   	}
   }
 }

@@ -52,6 +52,7 @@ class Node extends \phphaml\Node {
 		return $result;
 		
 	}
+	
 }
 
 ?>

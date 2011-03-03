@@ -148,11 +148,12 @@ abstract class Node {
 	 */
 	public function previous_child($context) {
 		
-		end($this->children);
-		if(!prev($this->children))
-			return false;
-		
-		return current($this->children);
+	  $prev = false;
+	  foreach($this->children as $child) {
+	    if($child === $context)
+	      return $prev;
+      $prev = $child;
+	  }
 		
 	}
 	
@@ -161,11 +162,14 @@ abstract class Node {
 	 */
 	public function next_child($context) {
 		
-		reset($this->children);
-		if(!next($this->children))
-			return false;
-		
-		return current($this->children);
+	  $next = false;
+	  foreach($this->children as $child) {
+	    if($next)
+	      return $child;
+	    if($child === $context)
+	      $next = true;
+	  }
+	  return false;
 		
 	}
 	
