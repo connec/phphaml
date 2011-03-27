@@ -43,10 +43,10 @@ class Tag extends Node {
 	public function render() {
 		
 	  $newline = '<?php echo "\n"; ?>';
-	  $open_tag = '<' . $this->tag_name . (empty($this->attributes) ? '' : ' ' . $this->render_attributes()) . '>';
+	  $open_tag = '<' . $this->tag_name . (empty($this->attributes) ? '' : ' ' . $this->render_attributes_php()) . '>';
 		$close_tag = '</' . $this->tag_name . '>';
 		
-		if($this->self_closing) {
+		if($this->self_closing or (empty($this->children) and in_array($this->tag_name, $this->option('autoclose')))) {
 			if($this->option('format') == 'xhtml')
 				$open_tag = substr($open_tag, 0, -1) . ' />';
 			
@@ -71,9 +71,9 @@ class Tag extends Node {
 	}
 	
 	/**
-	 * Renders the attribute string for this tag.
+	 * Renders the PHP representing the attributes.
 	 */
-	protected function render_attributes() {
+	protected function render_attributes_php() {
 		
 	  $attributes = 'array(';
 	  foreach($this->attributes as $attribute => $value) {
@@ -102,11 +102,71 @@ class Tag extends Node {
 	  }
 	  $attributes .= ')';
 	  
-	  return '<?php $__generate_attributes('
-	    . var_export($this->option('format'), true) . ','
-	    . var_export($this->option('attr_wrapper'), true) . ','
-  	  . $attributes . '); ?>';
+	  return '<?php $__render_attributes(' . $attributes . '); ?>';
 		
+	}
+	
+	/**
+	 * Renders HTML for given attributes.
+	 */
+	public static function render_attributes_html($format, $quote, $attributes) {
+	  
+	  $result = array();
+    $classes = array();
+    $ids = array();
+    
+    foreach($attributes as $attribute) {
+      if(!$attribute[1])
+        continue;
+      
+      $value = $attribute[1];
+      $attribute = $attribute[0];
+      
+      if($attribute == 'class') {
+        if(is_array($value))
+          $classes = array_merge($classes, $value);
+        else
+          $classes[] = $value;
+        continue;
+      }
+      
+      if($attribute == 'id') {
+        if(is_array($value))
+          $ids = array_merge($ids, $value);
+        else
+          $ids[] = $value;
+        continue;
+      }
+      
+      if($value === true and $format != 'xhtml') {
+        $result[] = $attribute;
+        continue;
+      } elseif($value === true) {
+        $result[] = $attribute . '=' . $quote . $attribute . $quote;
+        continue;
+      }
+      
+      if($attribute == 'class') {
+        $classes = array_merge($classes, $value);
+        continue;
+      } elseif($attribute == 'id') {
+        $ids = array_merge($ids, $value);
+        continue;
+      }
+      
+      $result[] = $attribute . '=' . $quote . $value . $quote;
+    }
+    
+    if(!empty($classes)) {
+      natcasesort($classes);
+      $result[] = 'class=' . $quote . implode(' ', $classes) . $quote;
+    }
+    if(!empty($ids))
+      $result[] = 'id=' . $quote . implode('_', $ids) . $quote;
+    
+    natcasesort($result);
+    echo implode(' ', $result);
+	  
 	}
 	
 }

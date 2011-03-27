@@ -175,6 +175,11 @@
     "multiple nested simple Haml tags" : {
       "haml" : "%div\n  %div\n    %p",
       "html" : "<div>\n  <div>\n    <p></p>\n  </div>\n</div>"
+    },
+    
+    "invalid tag definitions fall through" : {
+      "haml" : "%div#_\n.!",
+      "html" : "%div#_\n.!"
     }
   },
 
@@ -376,7 +381,15 @@
       "html" : "<p class='class1 class2'></p>",
       "optional" : true
     },
-
+    
+    "Ruby-style multiple classes as an attribute (as a variable)" : {
+      "haml" : "%p{:class => $classes}",
+      "html" : "<p class='class1 class2'></p>",
+      "locals" : {
+        "classes" : ["class2", "class1"]
+      }
+    },
+    
     "Ruby-style tag with a CSS class and 'class' as an attribute" : {
       "haml" : "%p.class2{:class => 'class1'}",
       "html" : "<p class='class1 class2'></p>",
@@ -432,6 +445,11 @@
       "locals" : {
         "var" : "a"
       }
+    },
+    
+    "Ruby-style and HTML attributes" : {
+      "haml" : "#a(id='b' id='c'){:id => 'g', :id => 'd', :id => ['e', 'f']}",
+      "html" : "<div id='a_c_g_d_e_f'></div>"
     }
   },
 

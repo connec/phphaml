@@ -14,70 +14,6 @@ namespace phphaml\haml;
  */
 
 class Parser extends \phphaml\Parser {
-	
-  /**
-   * The header to prepend to the compiled PHP/HTML.
-   */
-  protected static $header = <<<HEADER
-<?php
-\$__generate_attributes = function(\$format, \$quote, \$attributes) {
-  \$result = array();
-  \$classes = array();
-  \$ids = array();
-  foreach(\$attributes as \$attribute => \$value) {
-    if(is_int(\$attribute)) {
-      if(\$value[0] == 'class') {
-        if(is_array(\$value[1]))
-          \$classes = array_merge(\$classes, \$value[1]);
-        else
-          \$classes[] = \$value[1];
-        continue;
-      }
-      if(\$value[0] == 'id') {
-        if(is_array(\$value[1]))
-          \$ids = array_merge(\$ids, \$value[1]);
-        else
-          \$ids[] = \$value[1];
-        continue;
-      }
-      \$attribute = \$value[0];
-      \$value = \$value[1];
-    }
-    
-    if(!\$value)
-      continue;
-    
-    if(\$value === true and \$format != 'xhtml') {
-      \$result[] = \$attribute;
-      continue;
-    } elseif(\$value === true) {
-      \$result[] = \$attribute . '=' . \$quote . \$attribute . \$quote;
-      continue;
-    }
-    
-    if(\$attribute == 'class') {
-      \$classes = array_merge(\$classes, \$value);
-      continue;
-    } elseif(\$attribute == 'id') {
-      \$ids = array_merge(\$ids, \$value);
-      continue;
-    }
-    
-    \$result[] = \$attribute . '=' . \$quote . \$value . \$quote;
-  }
-  
-  if(!empty(\$classes)) {
-    natcasesort(\$classes);
-    \$result[] = 'class=' . \$quote . implode(' ', \$classes) . \$quote;
-  }
-  if(!empty(\$ids))
-    \$result[] = 'id=' . \$quote . implode('_', \$ids) . \$quote;
-  
-  natcasesort(\$result);
-  echo implode(' ', \$result);
-}
-?>
-HEADER;
   
 	/**
 	 * An array of options affecting parsing or output generation.
@@ -123,13 +59,16 @@ HEADER;
 		if(!$this->line_number)
 			$this->parse();
 		
-		$result = $this->root->render_children();
-		$result = static::$header . $result;
+		$result = $this->root->render();
 		
 		ob_start();
 		
 		StringStream::add_string('result', $result);
 		extract($this->variables);
+		$__options = $this->options;
+		$__render_attributes = function($attributes) use ($__options) {
+		  nodes\Tag::render_attributes_html($__options['format'], $__options['attr_wrapper'], $attributes);
+		};
 		include 'StringStream://result';
 		StringStream::clear('result');
 		

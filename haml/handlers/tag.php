@@ -8,6 +8,7 @@ namespace phphaml\haml\handlers;
 
 use
 	\phphaml\Handler,
+	\phphaml\NotHandledException,
 	\phphaml\haml\nodes,
 	\phphaml\haml\Parser,
 	\phphaml\haml\PhpValue,
@@ -111,23 +112,28 @@ class Tag extends Handler {
 			$node->tag_name = $match[0];
 		}
 		
+		$id = false;
+		$classes = array();
 		while($node->content[0] == '.' or $node->content[0] == '#') {
 			$type = $node->content[0] == '.' ? 'class' : 'id';
 			
 			if(!preg_match($type == 'id' ? self::RE_ID : self::RE_CLASS, substr($node->content, 1), $match)) {
-			  static::$parser->force_handler($text_handler);
-			  return static::$parser->handle();
-			}
+			  $node->remove();
+			  throw new NotHandledException();
+		  }
 			
 			$node->content = substr($node->content, strlen($match[0]) + 1);
 			
-			if($type == 'class') {
-			  if(!isset($node->attributes[$type]))
-			    $node->attributes[$type] = array();
-				$node->attributes[$type][] = '\'' . $match[0] . '\'';
-			} else
-				$node->attributes[$type] = array('\'' . $match[0] . '\'');
+			if($type == 'class')
+			  $classes[] = '\'' . $match[0] . '\'';
+			else
+			  $id = $match[0];
 		}
+		
+		if($classes)
+		  $node->attributes[] = array('\'class\'', $classes);
+		if($id)
+		  $node->attributes[] = array('\'id\'', '\'' . $id . '\'');
 		
 		static::parse_html_attributes($node);
 		
@@ -146,6 +152,7 @@ class Tag extends Handler {
 				return;
 			}
 			
+			$attributes = array();
 			foreach(static::quote_safe_explode(' ', $html_attributes) as $entry) {
 				$parts = static::quote_safe_explode('=', $entry);
 				
@@ -155,18 +162,11 @@ class Tag extends Handler {
 				if($parts[1][0] == '"')
 				  $parts[1] = ruby\InterpolatedString::compile($parts[1]);
 				
-				if($parts[0] == 'class') {
-				  if(!isset($node->attributes[$parts[0]]))
-				    $node->attributes[$parts[0]] = array();
-			    $node->attributes[$parts[0]][] = $parts[1];
-				} elseif($parts[0] == 'id') {
-				  if(!isset($node->attributes[$parts[0]]))
-				    $node->attributes[$parts[0]] = array($parts[1]);
-				  else
-			      $node->attributes[$parts[0]][1] = $parts[1];
-				} else
-				  $node->attributes[$parts[0]] = $parts[1];
+				$attributes[$parts[0]] = $parts[1];
 			}
+			
+			foreach($attributes as $attribute => $value)
+			  $node->attributes[] = array('\'' . $attribute . '\'', $value);
 			
 			$node->content = substr($node->content, strlen($html_attributes) + 2);
 		}
@@ -205,17 +205,17 @@ class Tag extends Handler {
 	 */
 	protected static function parse_end(nodes\Tag $node) {
 		
-		while(($token = $node->content[0]) == '<' or $node->content[0] == '>') {
-			$node->content = substr($node->content, 1);
-			
-			if($token == '<')
-				$node->trim_inner = true;
-			else {
-			  $node->trim_outer = true;
-			  $node->render_newline = false;
-			  $node->previous_sibling()->render_newline = false;
-			}
-		}
+	  if($node->content[0] == '<') {
+	    $node->content = substr($node->content, 1);
+	    $node->trim_inner = true;
+	  }
+	  
+	  if($node->content[0] == '>') {
+	    $node->content = substr($node->content, 1);
+	    $node->trim_outer = true;
+	    $node->render_newline = false;
+	    $node->previous_sibling()->render_newline = false;
+	  }
 		
 		if(in_array($node->tag_name, static::$parser->option('preserve')))
 			$node->trim_inner = true;
@@ -226,8 +226,7 @@ class Tag extends Handler {
 			
 			$node->content = substr($node->content, 1);
 			$node->self_closing = true;
-		} elseif($node->content == '' and in_array($node->tag_name, static::$parser->option('autoclose')))
-			$node->self_closing = true;
+		}
 		
 		if($node->content = trim($node->content)) {
 			$text_node = new nodes\Text();
