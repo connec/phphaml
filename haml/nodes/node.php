@@ -42,11 +42,12 @@ class Node extends \phphaml\Node {
 	  $newline = '<?php echo "\n"; ?>';
 	  
 	  $result = '';
-		foreach($this->children as $i => $child) {
+	  $i = 0;
+		foreach($this->children as $child) {
 		  if($child->render_indent)
 		    $result .= $child->indent();
 	    $result .= $child->render();
-	    if($child->render_newline and $i + 1 != count($this->children))
+	    if($child->render_newline and ++$i != count($this->children))
 	      $result .= $newline;
 		}
 		return $result;
