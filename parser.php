@@ -418,9 +418,13 @@ abstract class Parser {
 				if($trigger == '*')
 					continue; // Leave the wildcard trigger until last.
 				if(substr($this->content, 0, strlen($trigger)) == $trigger) {
-					$handled = true;
-					$handler::handle($this);
-					break;
+				  try {
+					  $handler::handle($this);
+					  $handled = true;
+					  break;
+				  } catch(NotHandledException $e) {
+				    // Fall through
+				  }
 				}
 			}
 		}
@@ -446,6 +450,16 @@ abstract class Parser {
 		
 	}
 	
+}
+
+/**
+ * An exception thrown when a handler does not handle a source line.
+ */
+
+class NotHandledException extends Exception {
+  
+  
+  
 }
 
 ?>

@@ -36,7 +36,7 @@ class Exception extends \Exception {
 	 * @param array  $vars
 	 * @return void
 	 */
-	public function __construct($message, $vars = array()) {
+	public function __construct($message = '', $vars = array()) {
 		
 		if(isset(static::$messages[$message]))
 			$message = static::$messages[$message];
