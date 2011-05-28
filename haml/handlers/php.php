@@ -59,8 +59,10 @@ class Php extends Handler {
 	  if(!$node->control_structure)
 	    return static::$parser->expect_indent(Parser::EXPECT_LESS | Parser::EXPECT_SAME);
     
-    if($node->control_structure == 'else if' or $node->control_structure == 'elseif')
+    if($node->control_structure == 'else if') {
+      $node->content = substr_replace($node->content, 'elseif', 0, 7);
       $node->control_structure = 'elseif';
+    }
     
     if($node->control_structure == 'elseif' or $node->control_structure == 'else') {
       $previous = $node->previous_sibling();
@@ -82,6 +84,7 @@ class Php extends Handler {
     switch($node->control_structure) {
       case 'if':
       case 'elseif':
+      case 'else if':
       case 'while':
       case 'for':
       case 'foreach':

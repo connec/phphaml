@@ -688,5 +688,29 @@
   	  "haml" : "- switch(true)\n  - case 2 > 1\n    nope\n  - break\n  - case 4 > 3\n    yes\n  - break",
   	  "html" : "nope"
   	}
+  },
+  
+  "Terser PHP Support" : {
+    
+    "a terse PHP if statement" : {
+      "haml" : "- if true\n  true",
+      "html" : "true"
+    },
+    
+    "a terse PHP if/elseif statement" : {
+      "haml" : "- if false\n  false\n- else if true\n  true",
+      "html" : "true"
+    },
+    
+    "a terse foreach/else statement" : {
+      "haml" : "- foreach array(1,2,3) as $i\n  = $i\n- else\n  empty",
+      "html" : "1\n2\n3"
+    },
+    
+    "another terse foreach/else statement" : {
+      "haml" : "- foreach array() as $i\n  = $i\n- else\n  empty",
+      "html" : "empty"
+    }
+    
   }
 }
