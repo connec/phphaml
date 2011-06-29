@@ -104,7 +104,8 @@ abstract class RList {
 		
 		static $delimeters = array(
 			array('{', '}'),
-			array('[', ']')
+			array('[', ']'),
+			array('(', ')')
 		);
 		
 		$depth = array();
