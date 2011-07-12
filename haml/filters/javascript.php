@@ -22,19 +22,17 @@ class Javascript extends Filter {
 		foreach($node->content as &$line)
 			$line = str_repeat($node->indent_string(), 2) . $line;
 		
-		$indent = str_repeat($node->indent_string(), $node->indent_level);
-		
 		$q = $node->option('attr_wrapper');
 		array_unshift(
 			$node->content,
-			$indent . "<script type={$q}text/javascript{$q}>",
-			$indent . $node->indent_string() . '//<![CDATA['
+			"<script type={$q}text/javascript{$q}>",
+			$node->indent_string() . '//<![CDATA['
 		);
 		
 		array_push(
 			$node->content,
-			$indent . $node->indent_string() . '//]]>',
-			$indent . '</script>'
+			$node->indent_string() . '//]]>',
+			'</script>'
 		);
 		
 		return $node->content;

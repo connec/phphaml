@@ -53,7 +53,7 @@ class Filter extends Handler {
 				. '\\filters';
 		}
 		
-		if(static::$indent_level === false) {
+		if(static::$parser->context_locked() === false) {
 			$node = nodes\Filter::new_from_parser(static::$parser);
 			
 			$node->filter = 
@@ -69,7 +69,7 @@ class Filter extends Handler {
 			static::$parser->lock_context();
 		} else {
 			$indent_level = static::$parser->indent_level() - static::$indent_level - 1;
-			$indent = str_repeat(static::$parser->indent_string(), $indent_level);
+			$indent = str_repeat(static::$parser->indent_string(), $indent_level < 0 ? 0 : $indent_level);
 			
 			static::$parser->context()->last_child()->content[] = $indent . static::$parser->content();
 		}

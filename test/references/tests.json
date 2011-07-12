@@ -510,8 +510,8 @@
     },
 
     "content in a 'javascript' filter" : {
-      "haml" : ":javascript\n  a();\n%p",
-      "html" : "<script type='text/javascript'>\n  //<![CDATA[\n    a();\n  //]]>\n</script>\n<p></p>"
+      "haml" : ":javascript\n  a(function() {\n    b();\n  });\n%p",
+      "html" : "<script type='text/javascript'>\n  //<![CDATA[\n    a(function() {\n      b();\n    });\n  //]]>\n</script>\n<p></p>"
     }
 
   },

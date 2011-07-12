@@ -25,14 +25,14 @@ class Css extends Filter {
 		$q = $node->option('attr_wrapper');
 		array_unshift(
 			$node->content,
-			$node->indent() . "<style type={$q}text/css{$q}>",
-			$node->indent() . $node->indent_string() . '/*<![CDATA[*' . '/'
+			"<style type={$q}text/css{$q}>",
+			$node->indent_string() . '/*<![CDATA[*' . '/'
 		);
 		
 		array_push(
 			$node->content,
-			$node->indent() . $node->indent_string() . '/*]]>*/',
-			$node->indent() . '</style>'
+			$node->indent_string() . '/*]]>*/',
+			'</style>'
 		);
 		
 		return $node->content;

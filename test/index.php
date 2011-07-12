@@ -109,6 +109,6 @@ namespace phphaml\test;
 		</script>
 	</head>
 	<body>
-<? include 'test.php' ?>
+<?php include 'test.php' ?>
 	</body>
 </html>

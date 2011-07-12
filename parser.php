@@ -246,6 +246,15 @@ abstract class Parser {
 	}
 	
 	/**
+   * Accessor for {$context_locked}.
+	 */
+	public function context_locked() {
+	  
+	  return $this->context_locked;
+	  
+	}
+	
+	/**
 	 * Initialises the parser with given source and options.
 	 */
 	public function __construct($source, array $options = array()) {
