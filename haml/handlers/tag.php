@@ -323,6 +323,7 @@ class Tag extends Handler {
 			if(!$quote and strpos($string, $delimeter, $i) === $i) {
 				$result[] = substr($string, 0, $i);
 				$string = substr($string, $i + strlen($delimeter));
+				$i = -1;
 			}
 		}
 		

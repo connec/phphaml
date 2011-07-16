@@ -374,7 +374,7 @@ abstract class Parser {
 		}
 		
 		if($this->context_locked !== false) {
-		  if($indent_level == $this->context_locked) {
+		  if($indent_level <= $this->context_locked) {
 		    $this->force_handler = false;
 		    $this->context_locked = false;
 	    }
