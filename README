@@ -33,3 +33,5 @@ component involved in parsing a document:
     Unsurprisingly, Nodes are used as nodes in the abstract syntax tree.  They
     contain all the information parsed by the Handlers, perform any context-
     sensitive validation and generate cacheable PHP code.
+
+REQUIRES PHP >= 5.3
