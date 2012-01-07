@@ -361,7 +361,7 @@ abstract class Parser {
 		preg_match($re, $this->content, $match);
 		if($match) {
 			if($this->indent_string) {
-				$indent_level = substr_count($this->content, $this->indent_string);
+				$indent_level = substr_count($match[0], $this->indent_string);
 			} else {
 				$indent_level = 1;
 				$this->indent_string = $match[0];
