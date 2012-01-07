@@ -28,7 +28,10 @@ class Library {
 	public static function namespace_from_class($class) {
 		
 		$namespace = substr($class, 0, strrpos($class, '\\'));
-		return $namespace[0] == '\\' ? $namespace : '\\' . $namespace;
+		if($namespace)
+		  return $namespace[0] == '\\' ? $namespace : '\\' . $namespace;
+	  else
+	    return '\\';
 		
 	}
 	
