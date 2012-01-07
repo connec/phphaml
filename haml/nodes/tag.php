@@ -116,7 +116,7 @@ class Tag extends Node {
     $ids = array();
     
     foreach($attributes as $attribute) {
-      if(!$attribute[1])
+      if($attribute[1] === false or $attribute[1] === null)
         continue;
       
       $value = $attribute[1];
