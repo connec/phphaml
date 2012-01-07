@@ -19,7 +19,7 @@ class Parser extends \phphaml\Parser {
 	 * An array of options affecting parsing or output generation.
 	 */
 	protected $options = array(
-		'format' => 'xhtml',
+		'format' => 'html',
 		'escape_html' => false,
 		'ugly' => false,
 		'suppress_eval' => false,
