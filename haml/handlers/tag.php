@@ -91,6 +91,9 @@ class Tag extends Handler {
 				default:
 					$node->exception('Sanity error: unknown multiline modifier');
 			}
+			
+			if(static::$multiline)
+			  static::$parser->force_handler(get_called_class());
 		}
 		
 	}
