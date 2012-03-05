@@ -378,7 +378,8 @@ abstract class Parser {
 		    $this->force_handler = false;
 		    $this->context_locked = false;
 	    }
-  	} else {
+    }
+  	if($this->context_locked === false) {
   		if($indent_level < $this->indent_level) {
   			if(!($this->expect_indent & self::EXPECT_LESS))
   				$this->exception('Parse error: unexpected indentation decrease');
@@ -404,7 +405,7 @@ abstract class Parser {
   			$this->context = end($this->context->children);
   		}
 		}
-
+    
 		$this->indent_level = $indent_level;
 		$this->expect_indent = self::EXPECT_ANY;
 
