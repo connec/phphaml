@@ -214,7 +214,8 @@ class Tag extends Handler {
 	    $node->content = substr($node->content, 1);
 	    $node->trim_outer = true;
 	    $node->render_newline = false;
-	    $node->previous_sibling()->render_newline = false;
+	    if($node->previous_sibling())
+	      $node->previous_sibling()->render_newline = false;
 	  }
 		
 		if(in_array($node->tag_name, static::$parser->option('preserve')))
