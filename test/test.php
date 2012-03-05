@@ -64,6 +64,9 @@ foreach($contexts as $context) {
 		if(!isset($test->config))
 			$test->config = new StdClass;
 		
+		if(!isset($test->config->format))
+			$test->config->format = 'xhtml';
+		
 		$parser = new Parser($test->haml, (array)$test->locals, (array)$test->config);
 		
 		$error = '';
