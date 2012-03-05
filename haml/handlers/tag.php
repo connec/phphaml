@@ -187,8 +187,8 @@ class Tag extends Handler {
 			$ruby_attributes = static::extract_balanced($node, '{', '}');
 			
 			if($ruby_attributes === false) {
-				if($node->content[strlen($node->content) - 1] != ',')
-					$this->exception('Parse error: lines in a multiline hash attributes must end with a comma (,)');
+				if($node->content[strlen($node->content) - 1] != ',' and $node->content != '{')
+					$node->exception('Parse error: lines in a multiline hash attributes must end with a comma (,)');
 				
 				static::$multiline = self::MULTILINE_RUBY_ATTRIBUTES;
 				return;
