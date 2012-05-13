@@ -241,6 +241,9 @@ abstract class Parser {
 	 */
 	public function lock_context() {
 	  
+	  if($this->context_locked !== false)
+	    $this->exception('Sanity error: cannot lock context - it\'s already locked');
+
 	  $this->context_locked = $this->indent_level;
 	  
 	}

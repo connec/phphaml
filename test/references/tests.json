@@ -463,6 +463,16 @@
     "a nested silent comment" : {
       "haml" : "-#\n  hello",
       "html" : ""
+    },
+
+    "a nested silent comment, followed by some content" : {
+      "haml" : "-#\n  hello\nworld",
+      "html" : "world"
+    },
+
+    "a silent comment in some markup" : {
+      "haml" : "%p\n  Paragraph\n  -# more stuff\noutside",
+      "html" : "<p>\n  Paragraph\n</p>\noutside"
     }
 
   },
