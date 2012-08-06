@@ -35,3 +35,5 @@ component involved in parsing a document:
     sensitive validation and generate cacheable PHP code.
 
 REQUIRES PHP >= 5.3
+
+WTFPL (http://sam.zoy.org/wtfpl/)
